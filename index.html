@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ForearmSense</title>
+<style>
+  /* ── Design System ─────────────────────────────────────── */
+  :root {
+    --bg:         #0a0e14;
+    --surface:    #111720;
+    --font-display: 'Syne', 'Segoe UI', system-ui, sans-serif;
+    --font-mono:    'Space Mono', 'Courier New', monospace;
+    --border:     #1e2a3a;
+    --text:       #c8d8e8;
+    --text-dim:   #4a6070;
+    --accent:     #00e5ff;
+    --accent-dim: #003d4d;
+
+    --good:    #00e676;
+    --warn:    #ffea00;
+    --hot:     #ff5722;
+    --error:   #ff1744;
+    --offline: #37474f;
+
+    --font-display: 'Syne', sans-serif;
+    --font-mono:    'Space Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ────────────────────────────────────────────── */
+  header {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1100px;
+    padding: 28px 32px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .logo span { color: var(--accent); }
+
+  /* ── Status Pulse ──────────────────────────────────────── */
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .pulse-ring {
+    position: relative;
+    width: 12px;
+    height: 12px;
+  }
+  .pulse-ring::before,
+  .pulse-ring::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--offline);
+  }
+  .pulse-ring::after {
+    background: transparent;
+    border: 2px solid var(--offline);
+    animation: none;
+  }
+
+  .pulse-ring.connected::before { background: var(--good); }
+  .pulse-ring.connected::after  {
+    border-color: var(--good);
+    animation: pulse-expand 1.6s ease-out infinite;
+  }
+  .pulse-ring.reading::before { background: var(--warn); }
+  .pulse-ring.reading::after  {
+    border-color: var(--warn);
+    animation: pulse-expand 0.8s ease-out infinite;
+  }
+  .pulse-ring.error::before { background: var(--error); }
+
+  @keyframes pulse-expand {
+    0%   { transform: scale(1);   opacity: 1; }
+    100% { transform: scale(2.8); opacity: 0; }
+  }
+
+  #status-text { color: var(--text-dim); }
+  #status-text.connected { color: var(--good); }
+  #status-text.reading   { color: var(--warn); }
+  #status-text.error     { color: var(--error); }
+
+  /* ── Main Layout ───────────────────────────────────────── */
+  main {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1100px;
+    padding: 32px 32px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  /* ── Connect Button ────────────────────────────────────── */
+  #connect-btn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    padding: 14px 40px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 0 30px rgba(0,229,255,0.25);
+  }
+  #connect-btn:hover  { opacity: 0.85; transform: translateY(-1px); }
+  #connect-btn:active { transform: translateY(0); }
+  #connect-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Forearm Stage ─────────────────────────────────────── */
+  .stage {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .forearm-svg-wrap {
+    position: relative;
+    width: 340px;
+    flex-shrink: 0;
+  }
+
+  /* Sensor label connectors */
+  .sensor-labels-left,
+  .sensor-labels-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+  }
+  .sensor-labels-left  { align-items: flex-end;  padding-right: 16px; }
+  .sensor-labels-right { align-items: flex-start; padding-left:  16px; }
+
+  .sensor-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 6px 0;
+  }
+
+  .sensor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-width: 130px;
+    transition: border-color 0.4s, box-shadow 0.4s;
+  }
+  .sensor-card.good { border-color: var(--good);  box-shadow: 0 0 16px rgba(0,230,118,0.12); }
+  .sensor-card.warn { border-color: var(--warn);  box-shadow: 0 0 16px rgba(255,234,0,0.12); }
+  .sensor-card.hot  { border-color: var(--hot);   box-shadow: 0 0 16px rgba(255,87,34,0.15); }
+  .sensor-card.err  { border-color: var(--error);  opacity: 0.5; }
+
+  .sensor-card .s-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+  }
+  .sensor-card .s-temp {
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+  .sensor-card .s-temp.good { color: var(--good); }
+  .sensor-card .s-temp.warn { color: var(--warn); }
+  .sensor-card .s-temp.hot  { color: var(--hot);  }
+
+  /* Connector line from card to forearm dot */
+  .connector {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), var(--accent-dim));
+    flex: 1;
+    min-width: 20px;
+    max-width: 60px;
+    opacity: 0.6;
+  }
+  .connector.right {
+    background: linear-gradient(270deg, var(--border), var(--accent-dim));
+  }
+
+  /* SVG forearm */
+  #forearm-svg {
+    width: 100%;
+    filter: drop-shadow(0 0 24px rgba(0,229,255,0.08));
+  }
+
+  /* Sensor dots on SVG */
+  .sensor-dot {
+    transition: fill 0.4s, filter 0.4s;
+    filter: none;
+    cursor: default;
+  }
+  .sensor-dot.good { fill: var(--good); filter: drop-shadow(0 0 6px var(--good)); }
+  .sensor-dot.warn { fill: var(--warn); filter: drop-shadow(0 0 6px var(--warn)); }
+  .sensor-dot.hot  { fill: var(--hot);  filter: drop-shadow(0 0 6px var(--hot));  }
+  .sensor-dot.err  { fill: var(--error); }
+  .sensor-dot.idle { fill: var(--border); }
+
+  /* ── Footer Stats Bar ──────────────────────────────────── */
+  .stats-bar {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    overflow: hidden;
+  }
+  .stat-cell {
+    padding: 16px 20px;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .sc-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .stat-cell .sc-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  /* ── Compatibility Warning ─────────────────────────────── */
+  #compat-warn {
+    display: none;
+    background: #1a0a00;
+    border: 1px solid var(--hot);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 0.8rem;
+    color: var(--hot);
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ── Responsive ────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    .stage { flex-direction: column; }
+    .sensor-labels-left, .sensor-labels-right {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 12px 0;
+      gap: 8px;
+    }
+    .sensor-row { width: auto; }
+    .connector { display: none; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat-cell:nth-child(2) { border-right: none; }
+    .stat-cell:nth-child(3) { border-right: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header>
+  <div class="logo">Forearm<span>Sense</span></div>
+  <div class="status-pill">
+    <div class="pulse-ring" id="pulse-ring"></div>
+    <span id="status-text">DISCONNECTED</span>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<main>
+
+  <div id="compat-warn">
+    ⚠ Web Bluetooth is only supported in <strong>Chrome</strong> or <strong>Edge</strong> on desktop/Android.
+    Safari and Firefox are not supported.
+  </div>
+
+  <button id="connect-btn">Connect to ForearmSense</button>
+
+  <!-- Sensor layout: left labels | forearm SVG | right labels -->
+  <div class="stage">
+
+    <!-- Left sensors: 1, 2, 3 -->
+    <div class="sensor-labels-left" id="labels-left">
+      <div class="sensor-row">
+        <div class="sensor-card" id="card-0">
+          <div class="s-label">Sensor 1 · Proximal</div>
+          <div class="s-temp" id="temp-0">—</div>
+        </div>
+        <div class="connector"></div>
+      </div>
+      <div class="sensor-row">
+        <div class="sensor-card" id="card-1">
+          <div class="s-label">Sensor 2 · Mid-Ulnar</div>
+          <div class="s-temp" id="temp-1">—</div>
+        </div>
+        <div class="connector"></div>
+      </div>
+      <div class="sensor-row">
+        <div class="sensor-card" id="card-2">
+          <div class="s-label">Sensor 3 · Distal</div>
+          <div class="s-temp" id="temp-2">—</div>
+        </div>
+        <div class="connector"></div>
+      </div>
+    </div>
+
+    <!-- Forearm SVG -->
+    <div class="forearm-svg-wrap">
+      <svg id="forearm-svg" viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg">
+        <!-- Forearm silhouette -->
+        <defs>
+          <linearGradient id="armGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#1a2535"/>
+            <stop offset="50%"  stop-color="#222f42"/>
+            <stop offset="100%" stop-color="#1a2535"/>
+          </linearGradient>
+          <linearGradient id="armEdge" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#00e5ff" stop-opacity="0.3"/>
+            <stop offset="30%"  stop-color="#00e5ff" stop-opacity="0.08"/>
+            <stop offset="70%"  stop-color="#00e5ff" stop-opacity="0.08"/>
+            <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Main forearm body -->
+        <!-- Elbow end (top, wider) tapering to wrist (bottom, narrower) -->
+        <path d="
+          M 60,30
+          Q 40,80 38,180
+          Q 36,280 42,360
+          Q 46,420 56,460
+          Q 80,490 100,492
+          Q 120,490 144,460
+          Q 154,420 158,360
+          Q 164,280 162,180
+          Q 160,80 140,30
+          Q 120,10 100,10
+          Q 80,10 60,30
+          Z"
+          fill="url(#armGrad)"
+          stroke="url(#armEdge)"
+          stroke-width="1.5"
+        />
+
+        <!-- Subtle centre-line anatomy hint -->
+        <line x1="100" y1="30" x2="100" y2="470" stroke="#1e2a3a" stroke-width="1" stroke-dasharray="4 6"/>
+
+        <!-- Sensor dots: left side sensors 1-3 (x≈55) -->
+        <circle class="sensor-dot idle" id="dot-0" cx="65"  cy="100" r="6"/>
+        <circle class="sensor-dot idle" id="dot-1" cx="58"  cy="230" r="6"/>
+        <circle class="sensor-dot idle" id="dot-2" cx="62"  cy="370" r="6"/>
+
+        <!-- Sensor dots: right side sensors 4-6 (x≈135) -->
+        <circle class="sensor-dot idle" id="dot-3" cx="135" cy="155" r="6"/>
+        <circle class="sensor-dot idle" id="dot-4" cx="142" cy="295" r="6"/>
+        <circle class="sensor-dot idle" id="dot-5" cx="138" cy="415" r="6"/>
+
+        <!-- Labels: elbow / wrist -->
+        <text x="100" y="22" text-anchor="middle" fill="#4a6070" font-family="'Space Mono',monospace" font-size="8" letter-spacing="2">ELBOW</text>
+        <text x="100" y="488" text-anchor="middle" fill="#4a6070" font-family="'Space Mono',monospace" font-size="8" letter-spacing="2">WRIST</text>
+      </svg>
+    </div>
+
+    <!-- Right sensors: 4, 5, 6 -->
+    <div class="sensor-labels-right" id="labels-right">
+      <div class="sensor-row">
+        <div class="connector right"></div>
+        <div class="sensor-card" id="card-3">
+          <div class="s-label">Sensor 4 · Proximal-R</div>
+          <div class="s-temp" id="temp-3">—</div>
+        </div>
+      </div>
+      <div class="sensor-row">
+        <div class="connector right"></div>
+        <div class="sensor-card" id="card-4">
+          <div class="s-label">Sensor 5 · Mid-Radial</div>
+          <div class="s-temp" id="temp-4">—</div>
+        </div>
+      </div>
+      <div class="sensor-row">
+        <div class="connector right"></div>
+        <div class="sensor-card" id="card-5">
+          <div class="s-label">Sensor 6 · Distal-R</div>
+          <div class="s-temp" id="temp-5">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /stage -->
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-cell">
+      <div class="sc-label">Average Temp</div>
+      <div class="sc-value" id="stat-avg">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="sc-label">Max Temp</div>
+      <div class="sc-value" id="stat-max">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="sc-label">Min Temp</div>
+      <div class="sc-value" id="stat-min">—</div>
+    </div>
+    <div class="stat-cell">
+      <div class="sc-label">Last Update</div>
+      <div class="sc-value" id="stat-time">—</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── JavaScript ──────────────────────────────────────────── -->
+<script>
+// ── BLE UUIDs — must match the ESP32 firmware exactly ──────────
+const SERVICE_UUID        = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+
+// ── State ───────────────────────────────────────────────────────
+let bleDevice    = null;
+let temperatures = [null, null, null, null, null, null];
+
+// ── DOM refs ────────────────────────────────────────────────────
+const connectBtn  = document.getElementById('connect-btn');
+const pulseRing   = document.getElementById('pulse-ring');
+const statusText  = document.getElementById('status-text');
+const compatWarn  = document.getElementById('compat-warn');
+
+// Check browser compatibility
+if (!navigator.bluetooth) {
+  compatWarn.style.display = 'block';
+  connectBtn.disabled = true;
+}
+
+// ── Connect Button ──────────────────────────────────────────────
+connectBtn.addEventListener('click', async () => {
+  try {
+    setStatus('connecting');
+
+    // 1. Open the browser's Bluetooth device picker
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ name: 'ForearmSense' }],           // Match our ESP32's name
+      optionalServices: [SERVICE_UUID]                 // Must declare here to access later
+    });
+
+    bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+    // 2. Connect to the GATT server on the ESP32
+    const server  = await bleDevice.gatt.connect();
+
+    // 3. Get the temperature service
+    const service = await server.getPrimaryService(SERVICE_UUID);
+
+    // 4. Get the temperature characteristic
+    const char    = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+    // 5. Subscribe to notifications — callback fires whenever ESP32 sends new data
+    await char.startNotifications();
+    char.addEventListener('characteristicvaluechanged', onDataReceived);
+
+    setStatus('connected');
+    connectBtn.textContent = 'Disconnect';
+    connectBtn.onclick = disconnect;
+
+  } catch (err) {
+    console.error('BLE connection error:', err);
+    setStatus('error');
+    // Reset after 3s
+    setTimeout(() => setStatus('disconnected'), 3000);
+  }
+});
+
+// ── Disconnect ──────────────────────────────────────────────────
+function disconnect() {
+  if (bleDevice && bleDevice.gatt.connected) {
+    bleDevice.gatt.disconnect();
+  }
+}
+
+function onDisconnected() {
+  setStatus('disconnected');
+  connectBtn.textContent = 'Connect to ForearmSense';
+  connectBtn.onclick = null;
+  connectBtn.addEventListener('click', arguments.callee); // re-attach original
+  // Reset display
+  temperatures = [null, null, null, null, null, null];
+  updateAllCards();
+}
+
+// ── Parse incoming BLE data ─────────────────────────────────────
+// ESP32 sends 12 bytes: 2 bytes per sensor, big-endian int16
+// Temperature in °C = raw * 0.0078125
+function onDataReceived(event) {
+  const view = event.target.value;  // DataView of the 12-byte payload
+
+  for (let i = 0; i < 6; i++) {
+    const raw = view.getInt16(i * 2, false); // false = big-endian
+    if (raw === 0x7FFF) {
+      temperatures[i] = null;  // Sensor error / not responding
+    } else {
+      temperatures[i] = raw * 0.0078125;
+    }
+  }
+
+  updateAllCards();
+  updateStats();
+  updateStatTime();
+  setStatus('reading');
+  // Brief "reading" flash, then back to "connected"
+  clearTimeout(window._readingTimer);
+  window._readingTimer = setTimeout(() => setStatus('connected'), 600);
+}
+
+// ── Classify temperature for colour coding ──────────────────────
+// Normal skin surface temp: ~30–35°C  |  Warn: 35–37.5  |  Hot: >37.5
+function classify(t) {
+  if (t === null)  return 'err';
+  if (t > 37.5)    return 'hot';
+  if (t > 35.0)    return 'warn';
+  return 'good';
+}
+
+// ── Update a single sensor card + SVG dot ──────────────────────
+function updateCard(index) {
+  const t    = temperatures[index];
+  const cls  = classify(t);
+  const card = document.getElementById(`card-${index}`);
+  const temp = document.getElementById(`temp-${index}`);
+  const dot  = document.getElementById(`dot-${index}`);
+
+  // Remove old classes
+  card.classList.remove('good','warn','hot','err');
+  temp.classList.remove('good','warn','hot');
+  dot.classList.remove('good','warn','hot','err','idle');
+
+  if (t === null) {
+    temp.textContent = 'ERR';
+    card.classList.add('err');
+    dot.classList.add('err');
+  } else {
+    temp.textContent = t.toFixed(2) + ' °C';
+    card.classList.add(cls);
+    temp.classList.add(cls);
+    dot.classList.add(cls);
+  }
+}
+
+function updateAllCards() {
+  for (let i = 0; i < 6; i++) updateCard(i);
+}
+
+// ── Stats bar ───────────────────────────────────────────────────
+function updateStats() {
+  const valid = temperatures.filter(t => t !== null);
+  if (valid.length === 0) return;
+  const avg = valid.reduce((a,b) => a+b, 0) / valid.length;
+  const max = Math.max(...valid);
+  const min = Math.min(...valid);
+  document.getElementById('stat-avg').textContent = avg.toFixed(2) + ' °C';
+  document.getElementById('stat-max').textContent = max.toFixed(2) + ' °C';
+  document.getElementById('stat-min').textContent = min.toFixed(2) + ' °C';
+}
+
+function updateStatTime() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('stat-time').textContent = `${h}:${m}:${s}`;
+}
+
+// ── Status helper ───────────────────────────────────────────────
+function setStatus(state) {
+  const states = {
+    disconnected: { label: 'DISCONNECTED', cls: ''          },
+    connecting:   { label: 'CONNECTING…',  cls: 'reading'   },
+    connected:    { label: 'CONNECTED',    cls: 'connected'  },
+    reading:      { label: 'RECEIVING',    cls: 'reading'    },
+    error:        { label: 'ERROR',        cls: 'error'      },
+  };
+  const s = states[state] || states.disconnected;
+  statusText.textContent = s.label;
+  statusText.className   = s.cls;
+  pulseRing.className    = 'pulse-ring ' + s.cls;
+}
+</script>
+
+</body>
+</html>
