@@ -3,23 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ForearmSense — Single Sensor Test</title>
+<title>ForearmSense</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 <style>
+  /* ── Palette inspired by weather UI ── */
   :root {
-    --bg:         #0a0e14;
-    --surface:    #111720;
-    --border:     #1e2a3a;
-    --text:       #c8d8e8;
-    --text-dim:   #4a6070;
-    --accent:     #00e5ff;
-    --accent-dim: #003d4d;
-    --good:    #00e676;
-    --warn:    #ffea00;
-    --hot:     #ff5722;
-    --error:   #ff1744;
-    --offline: #37474f;
-    --font-display: 'Segoe UI', system-ui, sans-serif;
-    --font-mono:    'Courier New', monospace;
+    --bg:        #1c1c1e;
+    --surface:   #2c2c2e;
+    --surface2:  #3a3a3c;
+    --border:    rgba(255,255,255,0.08);
+    --border2:   rgba(255,255,255,0.14);
+    --text:      #f2f2f7;
+    --muted:     rgba(255,255,255,0.38);
+    --subtle:    rgba(255,255,255,0.55);
+
+    /* Cute sensor colours — one per nerve point */
+    --c1: #7ec8e3;   /* palm        — sky blue   */
+    --c2: #b5a4f5;   /* ulnar (2)   — soft violet */
+    --c3: #f5a4c0;   /* medial      — blush pink  */
+    --c4: #a4d4a4;   /* radial      — sage green  */
+    --c5: #f5c97a;   /* ulnar (5)   — warm amber  */
+    --c6: #f5a07a;   /* elbow       — peach       */
+
+    /* Status colours */
+    --good: #6fcf97;
+    --warn: #f2c94c;
+    --hot:  #eb5757;
+
+    --font: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --radius: 14px;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,318 +39,601 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: var(--font-mono);
+    font-family: var(--font);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-x: hidden;
+    padding: 0 16px 60px;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 40px 40px;
-    opacity: 0.25;
-    pointer-events: none;
-    z-index: 0;
-  }
-
+  /* ── Header ── */
   header {
-    position: relative;
-    z-index: 1;
     width: 100%;
-    max-width: 600px;
-    padding: 28px 32px 0;
+    max-width: 860px;
+    padding: 32px 0 0;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
   }
-
-  .logo {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 1.4rem;
-    letter-spacing: -0.02em;
-    color: #fff;
-  }
-  .logo span { color: var(--accent); }
-  .logo .sub {
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-    font-weight: 400;
-    display: block;
-    margin-top: 2px;
+  .wordmark {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    color: var(--subtle);
   }
-
   .status-pill {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 8px 18px;
-    font-size: 0.72rem;
+    gap: 7px;
+    font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    color: var(--muted);
   }
-
-  .pulse-ring {
-    position: relative;
-    width: 12px;
-    height: 12px;
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    position: relative; flex-shrink: 0;
   }
-  .pulse-ring::before, .pulse-ring::after {
+  .dot.live  { background: var(--good); }
+  .dot.live::after, .dot.pulse::after {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: -3px;
     border-radius: 50%;
-    background: var(--offline);
+    border: 1px solid currentColor;
+    opacity: 0;
+    animation: ripple 2s ease-out infinite;
   }
-  .pulse-ring::after {
-    background: transparent;
-    border: 2px solid var(--offline);
-    animation: none;
-  }
-  .pulse-ring.connected::before { background: var(--good); }
-  .pulse-ring.connected::after  { border-color: var(--good); animation: pulse-expand 1.6s ease-out infinite; }
-  .pulse-ring.reading::before   { background: var(--warn); }
-  .pulse-ring.reading::after    { border-color: var(--warn); animation: pulse-expand 0.8s ease-out infinite; }
-  .pulse-ring.error::before     { background: var(--error); }
-
-  @keyframes pulse-expand {
-    0%   { transform: scale(1);   opacity: 1; }
-    100% { transform: scale(2.8); opacity: 0; }
+  .dot.live  { color: var(--good); }
+  .dot.pulse { background: var(--warn); color: var(--warn); }
+  .dot.pulse::after { animation-duration: 0.7s; }
+  .dot.err   { background: var(--hot); }
+  @keyframes ripple {
+    0%   { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2.4); opacity: 0; }
   }
 
-  #status-text           { color: var(--text-dim); }
-  #status-text.connected { color: var(--good); }
-  #status-text.reading   { color: var(--warn); }
-  #status-text.error     { color: var(--error); }
-
-  main {
-    position: relative;
-    z-index: 1;
+  /* ── Layout ── */
+  .page-body {
     width: 100%;
-    max-width: 600px;
-    padding: 40px 32px 48px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 32px;
-  }
-
-  #connect-btn {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--bg);
-    background: var(--accent);
-    border: none;
-    border-radius: 6px;
-    padding: 14px 40px;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s;
-    box-shadow: 0 0 30px rgba(0,229,255,0.25);
-  }
-  #connect-btn:hover    { opacity: 0.85; transform: translateY(-1px); }
-  #connect-btn:active   { transform: translateY(0); }
-  #connect-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-  /* ── Big temperature display ── */
-  .temp-display {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 48px 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    transition: border-color 0.4s, box-shadow 0.4s;
-  }
-  .temp-display.good { border-color: var(--good); box-shadow: 0 0 40px rgba(0,230,118,0.1); }
-  .temp-display.warn { border-color: var(--warn); box-shadow: 0 0 40px rgba(255,234,0,0.1); }
-  .temp-display.hot  { border-color: var(--hot);  box-shadow: 0 0 40px rgba(255,87,34,0.12); }
-  .temp-display.err  { border-color: var(--error); opacity: 0.6; }
-
-  .temp-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-
-  .temp-value {
-    font-size: 5rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: -0.04em;
-    line-height: 1;
-    transition: color 0.4s;
-  }
-  .temp-value.good { color: var(--good); }
-  .temp-value.warn { color: var(--warn); }
-  .temp-value.hot  { color: var(--hot);  }
-
-  .temp-unit {
-    font-size: 1.2rem;
-    color: var(--text-dim);
-    letter-spacing: 0.05em;
-  }
-
-  .temp-status {
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-top: 8px;
-  }
-  .temp-status.good { color: var(--good); }
-  .temp-status.warn { color: var(--warn); }
-  .temp-status.hot  { color: var(--hot);  }
-  .temp-status.err  { color: var(--error); }
-
-  /* ── Stats bar ── */
-  .stats-bar {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    max-width: 860px;
+    margin-top: 20px;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 320px;
+    gap: 12px;
+    align-items: start;
+  }
+
+  /* ── model-viewer card ── */
+  .viewer-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    overflow: hidden;
+    position: relative;
+  }
+
+  model-viewer {
+    width: 100%;
+    height: 520px;
+    background: transparent;
+    --poster-color: transparent;
+  }
+
+  /* ── Hotspot base ── */
+  .Hotspot {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    outline: none;
+  }
+
+  /* The coloured dot on the model */
+  .hotspot-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.7);
+    transition: transform 0.2s;
+    position: relative;
+  }
+  .hotspot-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    opacity: 0.4;
+    animation: ripple 2.2s ease-out infinite;
+  }
+  .Hotspot:hover .hotspot-dot { transform: scale(1.3); }
+
+  /* Sensor colour assignments */
+  .Hotspot[slot="hotspot-1"] .hotspot-dot { background: var(--c1); color: var(--c1); }
+  .Hotspot[slot="hotspot-2"] .hotspot-dot { background: var(--c2); color: var(--c2); }
+  .Hotspot[slot="hotspot-3"] .hotspot-dot { background: var(--c3); color: var(--c3); }
+  .Hotspot[slot="hotspot-5"] .hotspot-dot { background: var(--c4); color: var(--c4); }
+  .Hotspot[slot="hotspot-6"] .hotspot-dot { background: var(--c5); color: var(--c5); }
+  .Hotspot[slot="hotspot-7"] .hotspot-dot { background: var(--c6); color: var(--c6); }
+
+  /* Annotation bubble that pops up on the model */
+  .HotspotAnnotation {
+    background: rgba(28,28,30,0.85);
+    backdrop-filter: blur(8px);
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    white-space: nowrap;
+    margin-top: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .Hotspot:hover .HotspotAnnotation,
+  .Hotspot.active .HotspotAnnotation {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Progress bar */
+  .progress-bar { display: flex; }
+  .progress-bar.hide { visibility: hidden; display: none; }
+  .update-bar {
+    background: var(--c1);
+    width: 0%; height: 2px;
+    transition: width 0.3s;
+    border-radius: 2px;
+  }
+
+  /* AR button */
+  #ar-button {
+    background: rgba(44,44,46,0.9);
+    border: 0.5px solid var(--border2);
+    border-radius: 20px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+  }
+  #ar-prompt { display: none; }
+
+  /* ── Right panel ── */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── Sensor list ── */
+  .sensor-list {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
     overflow: hidden;
   }
+
+  .sensor-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 0.5px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .sensor-row:last-child { border-bottom: none; }
+  .sensor-row:hover { background: var(--surface2); }
+  .sensor-row.active { background: var(--surface2); }
+
+  /* Left accent line — colour per sensor */
+  .sensor-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 3px;
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .sensor-row.active::before,
+  .sensor-row:hover::before { opacity: 1; }
+  .sensor-row[data-sensor="0"]::before { background: var(--c1); }
+  .sensor-row[data-sensor="1"]::before { background: var(--c2); }
+  .sensor-row[data-sensor="2"]::before { background: var(--c3); }
+  .sensor-row[data-sensor="3"]::before { background: var(--c4); }
+  .sensor-row[data-sensor="4"]::before { background: var(--c5); }
+  .sensor-row[data-sensor="5"]::before { background: var(--c6); }
+
+  .swatch {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sensor-row[data-sensor="0"] .swatch { background: var(--c1); }
+  .sensor-row[data-sensor="1"] .swatch { background: var(--c2); }
+  .sensor-row[data-sensor="2"] .swatch { background: var(--c3); }
+  .sensor-row[data-sensor="3"] .swatch { background: var(--c4); }
+  .sensor-row[data-sensor="4"] .swatch { background: var(--c5); }
+  .sensor-row[data-sensor="5"] .swatch { background: var(--c6); }
+
+  .sensor-info { flex: 1; min-width: 0; }
+  .sensor-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sensor-sublabel {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .sensor-temp-col { text-align: right; flex-shrink: 0; }
+  .sensor-temp {
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--muted);
+    transition: color 0.4s;
+  }
+  .sensor-temp.good { color: var(--good); }
+  .sensor-temp.warn { color: var(--warn); }
+  .sensor-temp.hot  { color: var(--hot); }
+  .sensor-unit { font-size: 11px; color: var(--muted); }
+
+  /* ── Stats card ── */
+  .stats-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    padding: 18px 18px 16px;
+  }
+  .stats-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+  }
   .stat-cell {
-    padding: 16px 20px;
-    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
-  .stat-cell:last-child { border-right: none; }
-  .stat-cell .sc-label {
-    font-size: 0.6rem;
-    letter-spacing: 0.12em;
+  .stat-cell:nth-child(2) { text-align: center; }
+  .stat-cell:nth-child(3) { text-align: right; }
+  .sc-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 4px;
+    color: var(--muted);
   }
-  .stat-cell .sc-value {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #fff;
+  .sc-value {
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .sc-unit { font-size: 11px; color: var(--muted); }
+  .sc-value.placeholder { color: var(--muted); font-size: 16px; }
+
+  .stats-divider {
+    height: 0.5px;
+    background: var(--border);
+    margin: 14px 0;
   }
 
-  /* ── Raw debug panel ── */
-  .debug-panel {
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .mt-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .mt-value { font-size: 12px; color: var(--subtle); font-variant-numeric: tabular-nums; }
+
+  /* ── Connect button ── */
+  #connect-btn {
     width: 100%;
-    background: #0d1117;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    padding: 16px 18px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.18s, border-color 0.18s;
   }
-  .debug-panel .dp-label {
-    font-size: 0.6rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-  .debug-panel .dp-value {
-    font-size: 0.85rem;
-    color: var(--accent);
-  }
+  #connect-btn:hover:not(:disabled) { background: var(--surface2); border-color: var(--border2); }
+  #connect-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-arrow { color: var(--muted); transition: transform 0.2s; font-size: 16px; }
+  #connect-btn:hover:not(:disabled) .btn-arrow { transform: translateX(4px); }
 
+  /* ── Compat warning ── */
   #compat-warn {
     display: none;
-    background: #1a0a00;
-    border: 1px solid var(--hot);
-    border-radius: 8px;
-    padding: 14px 20px;
-    font-size: 0.8rem;
-    color: var(--hot);
-    text-align: center;
     width: 100%;
+    max-width: 860px;
+    margin-top: 10px;
+    background: rgba(235,87,87,0.07);
+    border: 0.5px solid rgba(235,87,87,0.22);
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 12px;
+    color: var(--hot);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    .page-body { grid-template-columns: 1fr; }
+    model-viewer { height: 360px; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    Forearm<span>Sense</span>
-    <span class="sub">Single Sensor Test</span>
-  </div>
+  <div class="wordmark">ForearmSense</div>
   <div class="status-pill">
-    <div class="pulse-ring" id="pulse-ring"></div>
-    <span id="status-text">DISCONNECTED</span>
+    <div class="dot" id="status-dot"></div>
+    <span id="status-text">Disconnected</span>
   </div>
 </header>
 
-<main>
+<div id="compat-warn">
+  Web Bluetooth requires Chrome or Edge. Safari and Firefox are not supported.
+</div>
 
-  <div id="compat-warn">
-    ⚠ Web Bluetooth only works in <strong>Chrome</strong> or <strong>Edge</strong>.
-    Safari and Firefox are not supported.
+<div class="page-body">
+
+  <!-- 3D model card -->
+  <div class="viewer-card">
+    <model-viewer
+      src="forearm_model.glb"
+      ar ar-modes="webxr scene-viewer quick-look"
+      camera-controls
+      tone-mapping="neutral"
+      poster="poster.webp"
+      shadow-intensity="1"
+      camera-orbit="90.1deg 79.89deg 8.304m"
+      field-of-view="30deg"
+      environment-image="aircraft_workshop_01_1k.hdr">
+
+      <!-- Hotspot 1 — Palm -->
+      <button class="Hotspot" slot="hotspot-1"
+        data-position="-0.69997724680618m -0.11552065133166023m 0.17079516065871475m"
+        data-normal="0.8423202204735467m 0.34778762765373966m 0.41175285333847983m"
+        data-visibility-attribute="visible"
+        data-sensor="0"
+        onclick="highlightSensor(0)">
+        <div class="hotspot-dot"></div>
+        <div class="HotspotAnnotation">Palm · S1</div>
+      </button>
+
+      <!-- Hotspot 2 — Ulnar nerve (2) -->
+      <button class="Hotspot" slot="hotspot-2"
+        data-position="-0.7471269449800015m -0.6786698846596868m 0.5808744746301238m"
+        data-normal="0.9155021223458567m 0.10709464204948141m 0.38779711399715916m"
+        data-visibility-attribute="visible"
+        data-sensor="1"
+        onclick="highlightSensor(1)">
+        <div class="hotspot-dot"></div>
+        <div class="HotspotAnnotation">Ulnar n. · S2</div>
+      </button>
+
+      <!-- Hotspot 3 — Medial nerve -->
+      <button class="Hotspot" slot="hotspot-3"
+        data-position="-0.6291996777474168m -1.135369329236927m 0.4683082277890259m"
+        data-normal="0.9710872044370789m 0.23502032610078963m -0.041893766816287335m"
+        data-visibility-attribute="visible"
+        data-sensor="2"
+        onclick="highlightSensor(2)">
+        <div class="hotspot-dot"></div>
+        <div class="HotspotAnnotation">Medial n. · S3</div>
+      </button>
+
+      <!-- Hotspot 5 — Radial nerve -->
+      <button class="Hotspot" slot="hotspot-5"
+        data-position="-1.1208746614563028m -1.267461999523452m 0.4805872188318885m"
+        data-normal="-0.999736852566426m 0.014744562933780531m -0.017573374305125688m"
+        data-visibility-attribute="visible"
+        data-sensor="3"
+        onclick="highlightSensor(3)">
+        <div class="hotspot-dot"></div>
+        <div class="HotspotAnnotation">Radial n. · S4</div>
+      </button>
+
+      <!-- Hotspot 6 — Ulnar nerve (5) -->
+      <button class="Hotspot" slot="hotspot-6"
+        data-position="-0.5300969363344729m -1.6467561604892647m 0.6216830608551476m"
+        data-normal="0.9058887278678288m 0.21533448597419708m 0.3646870876137994m"
+        data-visibility-attribute="visible"
+        data-sensor="4"
+        onclick="highlightSensor(4)">
+        <div class="hotspot-dot"></div>
+        <div class="HotspotAnnotation">Ulnar n. · S5</div>
+      </button>
+
+      <!-- Hotspot 7 — Elbow -->
+      <button class="Hotspot" slot="hotspot-7"
+        data-position="-0.46174915471035105m -2.1026618079185706m 0.4931029251118565m"
+        data-normal="0.9974854375164477m 0.0612158211055831m -0.03571309548317342m"
+        data-visibility-attribute="visible"
+        data-sensor="5"
+        onclick="highlightSensor(5)">
+        <div class="hotspot-dot"></div>
+        <div class="HotspotAnnotation">Elbow · S6</div>
+      </button>
+
+      <div class="progress-bar hide" slot="progress-bar">
+        <div class="update-bar"></div>
+      </div>
+      <button slot="ar-button" id="ar-button">View in AR</button>
+      <div id="ar-prompt"><img src="https://modelviewer.dev/shared-assets/icons/hand.png"></div>
+    </model-viewer>
   </div>
 
-  <button id="connect-btn">Connect to ForearmSense</button>
+  <!-- Right panel -->
+  <div class="right-panel">
 
-  <!-- Big temperature readout -->
-  <div class="temp-display" id="temp-display">
-    <div class="temp-label">Sensor 1 · TMP117</div>
-    <div class="temp-value" id="temp-value">—</div>
-    <div class="temp-unit">degrees Celsius</div>
-    <div class="temp-status" id="temp-status">Waiting for data</div>
-  </div>
-
-  <!-- Min / Max / Last update -->
-  <div class="stats-bar">
-    <div class="stat-cell">
-      <div class="sc-label">Session Max</div>
-      <div class="sc-value" id="stat-max">—</div>
+    <!-- Sensor list -->
+    <div class="sensor-list">
+      <div class="sensor-row" data-sensor="0" onclick="highlightSensor(0)">
+        <div class="swatch"></div>
+        <div class="sensor-info">
+          <div class="sensor-name">Palm</div>
+          <div class="sensor-sublabel">Sensor 1</div>
+        </div>
+        <div class="sensor-temp-col">
+          <div class="sensor-temp placeholder" id="temp-0">—</div>
+          <div class="sensor-unit" id="unit-0"></div>
+        </div>
+      </div>
+      <div class="sensor-row" data-sensor="1" onclick="highlightSensor(1)">
+        <div class="swatch"></div>
+        <div class="sensor-info">
+          <div class="sensor-name">Ulnar nerve</div>
+          <div class="sensor-sublabel">Sensor 2</div>
+        </div>
+        <div class="sensor-temp-col">
+          <div class="sensor-temp placeholder" id="temp-1">—</div>
+          <div class="sensor-unit" id="unit-1"></div>
+        </div>
+      </div>
+      <div class="sensor-row" data-sensor="2" onclick="highlightSensor(2)">
+        <div class="swatch"></div>
+        <div class="sensor-info">
+          <div class="sensor-name">Medial nerve</div>
+          <div class="sensor-sublabel">Sensor 3</div>
+        </div>
+        <div class="sensor-temp-col">
+          <div class="sensor-temp placeholder" id="temp-2">—</div>
+          <div class="sensor-unit" id="unit-2"></div>
+        </div>
+      </div>
+      <div class="sensor-row" data-sensor="3" onclick="highlightSensor(3)">
+        <div class="swatch"></div>
+        <div class="sensor-info">
+          <div class="sensor-name">Radial nerve</div>
+          <div class="sensor-sublabel">Sensor 4</div>
+        </div>
+        <div class="sensor-temp-col">
+          <div class="sensor-temp placeholder" id="temp-3">—</div>
+          <div class="sensor-unit" id="unit-3"></div>
+        </div>
+      </div>
+      <div class="sensor-row" data-sensor="4" onclick="highlightSensor(4)">
+        <div class="swatch"></div>
+        <div class="sensor-info">
+          <div class="sensor-name">Ulnar nerve</div>
+          <div class="sensor-sublabel">Sensor 5</div>
+        </div>
+        <div class="sensor-temp-col">
+          <div class="sensor-temp placeholder" id="temp-4">—</div>
+          <div class="sensor-unit" id="unit-4"></div>
+        </div>
+      </div>
+      <div class="sensor-row" data-sensor="5" onclick="highlightSensor(5)">
+        <div class="swatch"></div>
+        <div class="sensor-info">
+          <div class="sensor-name">Elbow</div>
+          <div class="sensor-sublabel">Sensor 6</div>
+        </div>
+        <div class="sensor-temp-col">
+          <div class="sensor-temp placeholder" id="temp-5">—</div>
+          <div class="sensor-unit" id="unit-5"></div>
+        </div>
+      </div>
     </div>
-    <div class="stat-cell">
-      <div class="sc-label">Session Min</div>
-      <div class="sc-value" id="stat-min">—</div>
-    </div>
-    <div class="stat-cell">
-      <div class="sc-label">Last Update</div>
-      <div class="sc-value" id="stat-time">—</div>
-    </div>
-  </div>
 
-  <!-- Raw bytes — useful for debugging -->
-  <div class="debug-panel">
-    <div class="dp-label">Raw BLE bytes (hex) — useful for debugging</div>
-    <div class="dp-value" id="debug-raw">—</div>
-  </div>
+    <!-- Session stats -->
+    <div class="stats-card">
+      <div class="stats-title">Session stats</div>
+      <div class="stats-grid">
+        <div class="stat-cell">
+          <div class="sc-label">Average</div>
+          <div class="sc-value placeholder" id="stat-avg">—</div>
+        </div>
+        <div class="stat-cell">
+          <div class="sc-label">High</div>
+          <div class="sc-value placeholder" id="stat-max">—</div>
+        </div>
+        <div class="stat-cell">
+          <div class="sc-label">Low</div>
+          <div class="sc-value placeholder" id="stat-min">—</div>
+        </div>
+      </div>
+      <div class="stats-divider"></div>
+      <div class="meta-row">
+        <div class="meta-item">
+          <div class="mt-label">Last update</div>
+          <div class="mt-value" id="stat-time">—</div>
+        </div>
+        <div class="meta-item" style="text-align:right;">
+          <div class="mt-label">Raw BLE</div>
+          <div class="mt-value" id="debug-raw">—</div>
+        </div>
+      </div>
+    </div>
 
-</main>
+    <!-- Connect -->
+    <button id="connect-btn">
+      <span id="btn-label">Connect to ForearmSense</span>
+      <span class="btn-arrow">→</span>
+    </button>
+
+  </div><!-- /right-panel -->
+</div><!-- /page-body -->
 
 <script>
+/* ── BLE ───────────────────────────────────────────────── */
 const SERVICE_UUID        = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
-let bleDevice = null;
-let sessionMax = null;
-let sessionMin = null;
+let bleDevice   = null;
+let isConnected = false;
+let temperatures = Array(6).fill(null);
+let sessionMax  = null;
+let sessionMin  = null;
 
-const connectBtn  = document.getElementById('connect-btn');
-const pulseRing   = document.getElementById('pulse-ring');
-const statusText  = document.getElementById('status-text');
-const compatWarn  = document.getElementById('compat-warn');
-const tempDisplay = document.getElementById('temp-display');
-const tempValue   = document.getElementById('temp-value');
-const tempStatus  = document.getElementById('temp-status');
-const debugRaw    = document.getElementById('debug-raw');
+const connectBtn = document.getElementById('connect-btn');
+const btnLabel   = document.getElementById('btn-label');
+const statusDot  = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+const compatWarn = document.getElementById('compat-warn');
 
 if (!navigator.bluetooth) {
   compatWarn.style.display = 'block';
@@ -346,31 +641,26 @@ if (!navigator.bluetooth) {
 }
 
 connectBtn.addEventListener('click', async () => {
+  if (isConnected) { disconnect(); return; }
   try {
     setStatus('connecting');
-
     bleDevice = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,              // shows all BLE devices so you can find it
+      acceptAllDevices: true,
       optionalServices: [SERVICE_UUID]
     });
-
     bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
     const server  = await bleDevice.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
     const char    = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
     await char.startNotifications();
     char.addEventListener('characteristicvaluechanged', onDataReceived);
-
+    isConnected = true;
     setStatus('connected');
-    connectBtn.textContent = 'Disconnect';
-    connectBtn.onclick = disconnect;
-
+    btnLabel.textContent = 'Disconnect';
   } catch (err) {
-    console.error('BLE error:', err);
+    console.error(err);
     setStatus('error');
-    setTimeout(() => setStatus('disconnected'), 3000);
+    setTimeout(() => setStatus('idle'), 3000);
   }
 });
 
@@ -379,99 +669,123 @@ function disconnect() {
 }
 
 function onDisconnected() {
-  setStatus('disconnected');
-  connectBtn.textContent = 'Connect to ForearmSense';
-  connectBtn.onclick = null;
-  connectBtn.addEventListener('click', arguments.callee);
-  tempValue.textContent = '—';
-  tempStatus.textContent = 'Waiting for data';
-  tempDisplay.className = 'temp-display';
-  tempValue.className = 'temp-value';
-  tempStatus.className = 'temp-status';
-  debugRaw.textContent = '—';
+  isConnected = false;
+  setStatus('idle');
+  btnLabel.textContent = 'Connect to ForearmSense';
+  temperatures = Array(6).fill(null);
+  updateAllSensors();
+  resetStats();
 }
 
 function onDataReceived(event) {
   const view = event.target.value;
 
-  // Show raw hex bytes for debugging
+  // Raw hex
   let hex = '';
   for (let i = 0; i < view.byteLength; i++) {
-    hex += '0x' + view.getUint8(i).toString(16).padStart(2, '0').toUpperCase();
+    hex += view.getUint8(i).toString(16).padStart(2,'0').toUpperCase();
     if (i < view.byteLength - 1) hex += ' ';
   }
-  debugRaw.textContent = hex + ` (${view.byteLength} bytes)`;
+  document.getElementById('debug-raw').textContent = hex;
 
-  // Parse 2 bytes → int16 → temperature
-  if (view.byteLength < 2) {
-    console.warn('Unexpected payload size:', view.byteLength);
-    return;
+  // Parse 6 sensors × 2 bytes each
+  const count = Math.min(6, Math.floor(view.byteLength / 2));
+  for (let i = 0; i < count; i++) {
+    const raw = view.getInt16(i * 2, false);
+    temperatures[i] = (raw === 0x7FFF) ? null : raw * 0.0078125;
   }
 
-  const raw = view.getInt16(0, false); // big-endian
+  updateAllSensors();
+  updateStats();
 
-  if (raw === 0x7FFF) {
-    // Sensor error sentinel
-    tempValue.textContent = 'ERR';
-    tempStatus.textContent = 'Sensor not responding — check wiring';
-    setCardClass('err');
-  } else {
-    const tempC = raw * 0.0078125;
-    const cls   = classify(tempC);
-
-    tempValue.textContent  = tempC.toFixed(2);
-    tempStatus.textContent = statusLabel(cls);
-    setCardClass(cls);
-
-    // Session min/max
-    if (sessionMax === null || tempC > sessionMax) sessionMax = tempC;
-    if (sessionMin === null || tempC < sessionMin) sessionMin = tempC;
-    document.getElementById('stat-max').textContent = sessionMax.toFixed(2) + ' °C';
-    document.getElementById('stat-min').textContent = sessionMin.toFixed(2) + ' °C';
-  }
-
-  // Timestamp
   const now = new Date();
-  const t = [now.getHours(), now.getMinutes(), now.getSeconds()]
-    .map(n => String(n).padStart(2,'0')).join(':');
-  document.getElementById('stat-time').textContent = t;
+  document.getElementById('stat-time').textContent =
+    now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 
-  // Brief "reading" flash
   setStatus('reading');
-  clearTimeout(window._readingTimer);
-  window._readingTimer = setTimeout(() => setStatus('connected'), 600);
+  clearTimeout(window._rt);
+  window._rt = setTimeout(() => setStatus('connected'), 700);
 }
 
+/* ── UI updates ──────────────────────────────────────── */
 function classify(t) {
-  if (t > 37.5) return 'hot';
-  if (t > 35.0) return 'warn';
+  if (t === null) return null;
+  if (t > 37.5)   return 'hot';
+  if (t > 35.0)   return 'warn';
   return 'good';
 }
 
-function statusLabel(cls) {
-  return { good: 'Normal range', warn: 'Elevated', hot: 'High temperature' }[cls] || '';
+function updateAllSensors() {
+  for (let i = 0; i < 6; i++) {
+    const t   = temperatures[i];
+    const cls = classify(t);
+    const el  = document.getElementById('temp-' + i);
+    const uel = document.getElementById('unit-' + i);
+    el.className = 'sensor-temp' + (t === null ? ' placeholder' : cls ? ' ' + cls : '');
+    el.textContent = t === null ? '—' : t.toFixed(1);
+    uel.textContent = t === null ? '' : '°C';
+  }
 }
 
-function setCardClass(cls) {
-  tempDisplay.className = 'temp-display ' + cls;
-  tempValue.className   = 'temp-value '   + cls;
-  tempStatus.className  = 'temp-status '  + cls;
+function updateStats() {
+  const valid = temperatures.filter(t => t !== null);
+  if (valid.length === 0) { resetStats(); return; }
+
+  const avg = valid.reduce((a,b) => a+b, 0) / valid.length;
+  const max = Math.max(...valid);
+  const min = Math.min(...valid);
+
+  if (sessionMax === null || max > sessionMax) sessionMax = max;
+  if (sessionMin === null || min < sessionMin) sessionMin = min;
+
+  const avgEl = document.getElementById('stat-avg');
+  const maxEl = document.getElementById('stat-max');
+  const minEl = document.getElementById('stat-min');
+
+  avgEl.innerHTML = avg.toFixed(1) + '<span class="sc-unit"> °C</span>';
+  maxEl.innerHTML = sessionMax.toFixed(1) + '<span class="sc-unit"> °C</span>';
+  minEl.innerHTML = sessionMin.toFixed(1) + '<span class="sc-unit"> °C</span>';
+  avgEl.className = 'sc-value';
+  maxEl.className = 'sc-value';
+  minEl.className = 'sc-value';
 }
 
+function resetStats() {
+  ['stat-avg','stat-max','stat-min'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = '—';
+    el.className = 'sc-value placeholder';
+  });
+  document.getElementById('stat-time').textContent = '—';
+  document.getElementById('debug-raw').textContent = '—';
+  sessionMax = null; sessionMin = null;
+}
+
+/* ── Hotspot / sensor row interaction ─────────────────── */
+function highlightSensor(index) {
+  // Highlight row in list
+  document.querySelectorAll('.sensor-row').forEach((r, i) => {
+    r.classList.toggle('active', i === index);
+  });
+  // Highlight hotspot button on model
+  document.querySelectorAll('.Hotspot').forEach(h => {
+    h.classList.toggle('active', parseInt(h.dataset.sensor) === index);
+  });
+}
+
+/* ── Status ──────────────────────────────────────────── */
 function setStatus(state) {
-  const states = {
-    disconnected: { label: 'DISCONNECTED', cls: ''         },
-    connecting:   { label: 'CONNECTING…',  cls: 'reading'  },
-    connected:    { label: 'CONNECTED',    cls: 'connected' },
-    reading:      { label: 'RECEIVING',    cls: 'reading'   },
-    error:        { label: 'ERROR',        cls: 'error'     },
+  const map = {
+    idle:       { label: 'Disconnected', dot: '' },
+    connecting: { label: 'Connecting…',  dot: 'pulse' },
+    connected:  { label: 'Connected',    dot: 'live' },
+    reading:    { label: 'Receiving',    dot: 'pulse' },
+    error:      { label: 'Error',        dot: 'err' },
   };
-  const s = states[state] || states.disconnected;
+  const s = map[state] || map.idle;
   statusText.textContent = s.label;
-  statusText.className   = s.cls;
-  pulseRing.className    = 'pulse-ring ' + s.cls;
+  statusDot.className    = 'dot ' + s.dot;
 }
 </script>
-
 </body>
 </html>
