@@ -609,9 +609,9 @@
           <div class="mt-label">Last update</div>
           <div class="mt-value" id="stat-time">—</div>
         </div>
-        <div class="meta-item" style="text-align:right;">
-          <div class="mt-label">Raw BLE</div>
-          <div class="mt-value" id="debug-raw">—</div>
+
+
+          
         </div>
       </div>
     </div>
@@ -699,7 +699,7 @@ function onDataReceived(event) {
   const jsonStr = decoder.decode(view);
 
   // Show raw string in the debug field
-  document.getElementById('debug-raw').textContent = jsonStr;
+ 
 
   // Parse JSON
   let parsed;
