@@ -20,7 +20,7 @@
     /* Cute sensor colours — one per nerve point */
     --c1: #7ec8e3;   /* palm        — sky blue   */
     --c2: #b5a4f5;   /* ulnar (2)   — soft violet */
-    --c3: #f5a4c0;   /* medial      — blush pink  */
+    --c3: #f5a4c0;   /* median      — blush pink  */
     --c4: #a4d4a4;   /* radial      — sage green  */
     --c5: #f5c97a;   /* ulnar (5)   — warm amber  */
     --c6: #f5a07a;   /* elbow       — peach       */
@@ -407,10 +407,10 @@
 
 <header>
 
-  <div style="position: relative;">
+  <div style="position: relative; padding: 0 0 1px;">
   <div class="wordmark">Temperature Sensing Sleeve for Nerve Conduction Study</div>
   <img src="./logo.png" alt="Rhythmlink Logo" style="width:38px; height:38px; position: absolute; left: 515px; bottom: -8px">
-    </div>
+  </div>
 
 
   <div class="status-pill">
@@ -469,7 +469,7 @@
         data-sensor="2"
         onclick="highlightSensor(2)">
         <div class="hotspot-dot"></div>
-        <div class="HotspotAnnotation">Medial n. · S3</div>
+        <div class="HotspotAnnotation">Median n. · S3</div>
       </button>
 
       <!-- Hotspot 5 — Radial nerve -->
@@ -543,7 +543,7 @@
       <div class="sensor-row" data-sensor="2" onclick="highlightSensor(2)">
         <div class="swatch"></div>
         <div class="sensor-info">
-          <div class="sensor-name">Medial nerve</div>
+          <div class="sensor-name">Median nerve</div>
           <div class="sensor-sublabel">Sensor 3</div>
         </div>
         <div class="sensor-temp-col">
@@ -657,9 +657,11 @@ connectBtn.addEventListener('click', async () => {
   try {
     setStatus('connecting');
     bleDevice = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [SERVICE_UUID]
+      //acceptAllDevices: true, this was changed so that not all devices would show up in the pairing prompt, only ones with the correct service UUID
+      filters: [{ name: 'ForearmSense' }]
+      //optionalServices: [SERVICE_UUID]
     });
+
     bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
     const server  = await bleDevice.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
@@ -692,19 +694,26 @@ function onDisconnected() {
 function onDataReceived(event) {
   const view = event.target.value;
 
-  // Raw hex
-  let hex = '';
-  for (let i = 0; i < view.byteLength; i++) {
-    hex += view.getUint8(i).toString(16).padStart(2,'0').toUpperCase();
-    if (i < view.byteLength - 1) hex += ' ';
-  }
-  document.getElementById('debug-raw').textContent = hex;
+  // Decode the raw bytes as a UTF-8 string
+  const decoder = new TextDecoder('utf-8');
+  const jsonStr = decoder.decode(view);
 
-  // Parse 6 sensors × 2 bytes each
-  const count = Math.min(6, Math.floor(view.byteLength / 2));
-  for (let i = 0; i < count; i++) {
-    const raw = view.getInt16(i * 2, false);
-    temperatures[i] = (raw === 0x7FFF) ? null : raw * 0.0078125;
+  // Show raw string in the debug field
+  document.getElementById('debug-raw').textContent = jsonStr;
+
+  // Parse JSON
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch (e) {
+    console.error('JSON parse error:', e, jsonStr);
+    return;
+  }
+
+  // parsed.t is your array of 6 sensor temps, parsed.robust is the Huber mean
+  const t = parsed.t;  // array of 6 floats or null
+  for (let i = 0; i < 6; i++) {
+    temperatures[i] = (t[i] === null || t[i] === undefined) ? null : t[i];
   }
 
   updateAllSensors();
@@ -712,7 +721,7 @@ function onDataReceived(event) {
 
   const now = new Date();
   document.getElementById('stat-time').textContent =
-    now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   setStatus('reading');
   clearTimeout(window._rt);
