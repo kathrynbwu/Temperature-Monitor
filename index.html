@@ -645,9 +645,9 @@ connectBtn.addEventListener('click', async () => {
   try {
     setStatus('connecting');
     bleDevice = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [SERVICE_UUID]
-    });
+  filters: [{ name: 'ForearmSense' }],
+  optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
+});
     bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
     const server  = await bleDevice.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
@@ -686,7 +686,6 @@ function onDataReceived(event) {
     hex += view.getUint8(i).toString(16).padStart(2,'0').toUpperCase();
     if (i < view.byteLength - 1) hex += ' ';
   }
-  document.getElementById('debug-raw').textContent = hex;
 
   // Parse 6 sensors × 2 bytes each
   const count = Math.min(6, Math.floor(view.byteLength / 2));
