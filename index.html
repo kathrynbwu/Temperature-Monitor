@@ -6,7 +6,6 @@
 <title>ForearmSense</title>
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 <style>
-  /* ── Palette inspired by weather UI ── */
   :root {
     --bg:        #1c1c1e;
     --surface:   #2c2c2e;
@@ -16,20 +15,15 @@
     --text:      #f2f2f7;
     --muted:     rgba(255,255,255,0.38);
     --subtle:    rgba(255,255,255,0.55);
-
-    /* Cute sensor colours — one per nerve point */
-    --c1: #7ec8e3;   /* palm        — sky blue   */
-    --c2: #b5a4f5;   /* ulnar (2)   — soft violet */
-    --c3: #f5a4c0;   /* medial      — blush pink  */
-    --c4: #a4d4a4;   /* radial      — sage green  */
-    --c5: #f5c97a;   /* ulnar (5)   — warm amber  */
-    --c6: #f5a07a;   /* elbow       — peach       */
-
-    /* Status colours */
+    --c1: #7ec8e3;
+    --c2: #b5a4f5;
+    --c3: #f5a4c0;
+    --c4: #a4d4a4;
+    --c5: #f5c97a;
+    --c6: #f5a07a;
     --good: #6fcf97;
     --warn: #f2c94c;
     --hot:  #eb5757;
-
     --font: -apple-system, 'Helvetica Neue', Arial, sans-serif;
     --radius: 14px;
   }
@@ -47,7 +41,6 @@
     padding: 0 16px 60px;
   }
 
-  /* ── Header ── */
   header {
     width: 100%;
     max-width: 860px;
@@ -78,7 +71,6 @@
     background: var(--muted);
     position: relative; flex-shrink: 0;
   }
-  .dot.live  { background: var(--good); }
   .dot.live::after, .dot.pulse::after {
     content: '';
     position: absolute;
@@ -88,7 +80,7 @@
     opacity: 0;
     animation: ripple 2s ease-out infinite;
   }
-  .dot.live  { color: var(--good); }
+  .dot.live  { background: var(--good); color: var(--good); }
   .dot.pulse { background: var(--warn); color: var(--warn); }
   .dot.pulse::after { animation-duration: 0.7s; }
   .dot.err   { background: var(--hot); }
@@ -97,7 +89,6 @@
     100% { transform: scale(2.4); opacity: 0; }
   }
 
-  /* ── Layout ── */
   .page-body {
     width: 100%;
     max-width: 860px;
@@ -108,7 +99,6 @@
     align-items: start;
   }
 
-  /* ── model-viewer card ── */
   .viewer-card {
     background: var(--surface);
     border-radius: var(--radius);
@@ -124,7 +114,6 @@
     --poster-color: transparent;
   }
 
-  /* ── Hotspot base ── */
   .Hotspot {
     background: none;
     border: none;
@@ -137,7 +126,6 @@
     outline: none;
   }
 
-  /* The coloured dot on the model */
   .hotspot-dot {
     width: 14px; height: 14px;
     border-radius: 50%;
@@ -156,7 +144,6 @@
   }
   .Hotspot:hover .hotspot-dot { transform: scale(1.3); }
 
-  /* Sensor colour assignments */
   .Hotspot[slot="hotspot-1"] .hotspot-dot { background: var(--c1); color: var(--c1); }
   .Hotspot[slot="hotspot-2"] .hotspot-dot { background: var(--c2); color: var(--c2); }
   .Hotspot[slot="hotspot-3"] .hotspot-dot { background: var(--c3); color: var(--c3); }
@@ -164,16 +151,13 @@
   .Hotspot[slot="hotspot-6"] .hotspot-dot { background: var(--c5); color: var(--c5); }
   .Hotspot[slot="hotspot-7"] .hotspot-dot { background: var(--c6); color: var(--c6); }
 
-  /* Annotation bubble that pops up on the model */
   .HotspotAnnotation {
-    background: rgba(28,28,30,0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(28,28,30,0.9);
     border: 0.5px solid var(--border2);
     border-radius: 8px;
     padding: 5px 10px;
     font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.04em;
     color: var(--text);
     white-space: nowrap;
     margin-top: 6px;
@@ -188,17 +172,10 @@
     transform: translateY(0);
   }
 
-  /* Progress bar */
   .progress-bar { display: flex; }
-  .progress-bar.hide { visibility: hidden; display: none; }
-  .update-bar {
-    background: var(--c1);
-    width: 0%; height: 2px;
-    transition: width 0.3s;
-    border-radius: 2px;
-  }
+  .progress-bar.hide { display: none; }
+  .update-bar { background: var(--c1); width: 0%; height: 2px; border-radius: 2px; }
 
-  /* AR button */
   #ar-button {
     background: rgba(44,44,46,0.9);
     border: 0.5px solid var(--border2);
@@ -215,14 +192,8 @@
   }
   #ar-prompt { display: none; }
 
-  /* ── Right panel ── */
-  .right-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  .right-panel { display: flex; flex-direction: column; gap: 8px; }
 
-  /* ── Sensor list ── */
   .sensor-list {
     background: var(--surface);
     border-radius: var(--radius);
@@ -241,10 +212,8 @@
     position: relative;
   }
   .sensor-row:last-child { border-bottom: none; }
-  .sensor-row:hover { background: var(--surface2); }
-  .sensor-row.active { background: var(--surface2); }
+  .sensor-row:hover, .sensor-row.active { background: var(--surface2); }
 
-  /* Left accent line — colour per sensor */
   .sensor-row::before {
     content: '';
     position: absolute;
@@ -263,11 +232,7 @@
   .sensor-row[data-sensor="4"]::before { background: var(--c5); }
   .sensor-row[data-sensor="5"]::before { background: var(--c6); }
 
-  .swatch {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .sensor-row[data-sensor="0"] .swatch { background: var(--c1); }
   .sensor-row[data-sensor="1"] .swatch { background: var(--c2); }
   .sensor-row[data-sensor="2"] .swatch { background: var(--c3); }
@@ -276,90 +241,39 @@
   .sensor-row[data-sensor="5"] .swatch { background: var(--c6); }
 
   .sensor-info { flex: 1; min-width: 0; }
-  .sensor-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .sensor-sublabel {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 1px;
-  }
+  .sensor-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sensor-sublabel { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
   .sensor-temp-col { text-align: right; flex-shrink: 0; }
-  .sensor-temp {
-    font-size: 18px;
-    font-weight: 300;
-    letter-spacing: -0.02em;
-    color: var(--muted);
-    transition: color 0.4s;
-  }
+  .sensor-temp { font-size: 18px; font-weight: 300; letter-spacing: -0.02em; color: var(--muted); transition: color 0.4s; }
   .sensor-temp.good { color: var(--good); }
   .sensor-temp.warn { color: var(--warn); }
   .sensor-temp.hot  { color: var(--hot); }
   .sensor-unit { font-size: 11px; color: var(--muted); }
 
-  /* ── Stats card ── */
   .stats-card {
     background: var(--surface);
     border-radius: var(--radius);
     border: 0.5px solid var(--border);
     padding: 18px 18px 16px;
   }
-  .stats-title {
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0;
-  }
-  .stat-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  .stats-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+  .stat-cell { display: flex; flex-direction: column; gap: 4px; }
   .stat-cell:nth-child(2) { text-align: center; }
   .stat-cell:nth-child(3) { text-align: right; }
-  .sc-label {
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .sc-value {
-    font-size: 20px;
-    font-weight: 300;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
+  .sc-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .sc-value { font-size: 20px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
   .sc-unit { font-size: 11px; color: var(--muted); }
   .sc-value.placeholder { color: var(--muted); font-size: 16px; }
 
-  .stats-divider {
-    height: 0.5px;
-    background: var(--border);
-    margin: 14px 0;
-  }
+  .stats-divider { height: 0.5px; background: var(--border); margin: 14px 0; }
 
-  .meta-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+  .meta-row { display: flex; justify-content: space-between; align-items: center; }
   .meta-item { display: flex; flex-direction: column; gap: 2px; }
   .mt-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
   .mt-value { font-size: 12px; color: var(--subtle); font-variant-numeric: tabular-nums; }
 
-  /* ── Connect button ── */
   #connect-btn {
     width: 100%;
     background: var(--surface);
@@ -369,7 +283,6 @@
     font-family: var(--font);
     font-size: 13px;
     font-weight: 500;
-    letter-spacing: 0.03em;
     padding: 16px 18px;
     cursor: pointer;
     display: flex;
@@ -382,7 +295,6 @@
   .btn-arrow { color: var(--muted); transition: transform 0.2s; font-size: 16px; }
   #connect-btn:hover:not(:disabled) .btn-arrow { transform: translateX(4px); }
 
-  /* ── Compat warning ── */
   #compat-warn {
     display: none;
     width: 100%;
@@ -396,7 +308,6 @@
     color: var(--hot);
   }
 
-  /* ── Responsive ── */
   @media (max-width: 680px) {
     .page-body { grid-template-columns: 1fr; }
     model-viewer { height: 360px; }
@@ -419,81 +330,66 @@
 
 <div class="page-body">
 
-  <!-- 3D model card -->
   <div class="viewer-card">
     <model-viewer
-      src="forearm_model.glb"
+      src="forearm.glb"
       ar ar-modes="webxr scene-viewer quick-look"
       camera-controls
       tone-mapping="neutral"
-      poster="poster.webp"
       shadow-intensity="1"
       camera-orbit="90.1deg 79.89deg 8.304m"
-      field-of-view="30deg"
-      environment-image="aircraft_workshop_01_1k.hdr">
+      field-of-view="30deg">
 
-      <!-- Hotspot 1 — Palm -->
       <button class="Hotspot" slot="hotspot-1"
         data-position="-0.69997724680618m -0.11552065133166023m 0.17079516065871475m"
         data-normal="0.8423202204735467m 0.34778762765373966m 0.41175285333847983m"
         data-visibility-attribute="visible"
-        data-sensor="0"
-        onclick="highlightSensor(0)">
+        data-sensor="0" onclick="highlightSensor(0)">
         <div class="hotspot-dot"></div>
         <div class="HotspotAnnotation">Palm · S1</div>
       </button>
 
-      <!-- Hotspot 2 — Ulnar nerve (2) -->
       <button class="Hotspot" slot="hotspot-2"
         data-position="-0.7471269449800015m -0.6786698846596868m 0.5808744746301238m"
         data-normal="0.9155021223458567m 0.10709464204948141m 0.38779711399715916m"
         data-visibility-attribute="visible"
-        data-sensor="1"
-        onclick="highlightSensor(1)">
+        data-sensor="1" onclick="highlightSensor(1)">
         <div class="hotspot-dot"></div>
         <div class="HotspotAnnotation">Ulnar n. · S2</div>
       </button>
 
-      <!-- Hotspot 3 — Medial nerve -->
       <button class="Hotspot" slot="hotspot-3"
         data-position="-0.6291996777474168m -1.135369329236927m 0.4683082277890259m"
         data-normal="0.9710872044370789m 0.23502032610078963m -0.041893766816287335m"
         data-visibility-attribute="visible"
-        data-sensor="2"
-        onclick="highlightSensor(2)">
+        data-sensor="2" onclick="highlightSensor(2)">
         <div class="hotspot-dot"></div>
-        <div class="HotspotAnnotation">Medial n. · S3</div>
+        <div class="HotspotAnnotation">Median n. · S3</div>
       </button>
 
-      <!-- Hotspot 5 — Radial nerve -->
       <button class="Hotspot" slot="hotspot-5"
         data-position="-1.1208746614563028m -1.267461999523452m 0.4805872188318885m"
         data-normal="-0.999736852566426m 0.014744562933780531m -0.017573374305125688m"
         data-visibility-attribute="visible"
-        data-sensor="3"
-        onclick="highlightSensor(3)">
+        data-sensor="3" onclick="highlightSensor(3)">
         <div class="hotspot-dot"></div>
         <div class="HotspotAnnotation">Radial n. · S4</div>
       </button>
 
-      <!-- Hotspot 6 — Ulnar nerve (5) -->
       <button class="Hotspot" slot="hotspot-6"
         data-position="-0.5300969363344729m -1.6467561604892647m 0.6216830608551476m"
         data-normal="0.9058887278678288m 0.21533448597419708m 0.3646870876137994m"
         data-visibility-attribute="visible"
-        data-sensor="4"
-        onclick="highlightSensor(4)">
+        data-sensor="4" onclick="highlightSensor(4)">
         <div class="hotspot-dot"></div>
         <div class="HotspotAnnotation">Ulnar n. · S5</div>
       </button>
 
-      <!-- Hotspot 7 — Elbow -->
       <button class="Hotspot" slot="hotspot-7"
         data-position="-0.46174915471035105m -2.1026618079185706m 0.4931029251118565m"
         data-normal="0.9974854375164477m 0.0612158211055831m -0.03571309548317342m"
         data-visibility-attribute="visible"
-        data-sensor="5"
-        onclick="highlightSensor(5)">
+        data-sensor="5" onclick="highlightSensor(5)">
         <div class="hotspot-dot"></div>
         <div class="HotspotAnnotation">Elbow · S6</div>
       </button>
@@ -506,80 +402,41 @@
     </model-viewer>
   </div>
 
-  <!-- Right panel -->
   <div class="right-panel">
 
-    <!-- Sensor list -->
     <div class="sensor-list">
       <div class="sensor-row" data-sensor="0" onclick="highlightSensor(0)">
         <div class="swatch"></div>
-        <div class="sensor-info">
-          <div class="sensor-name">Palm</div>
-          <div class="sensor-sublabel">Sensor 1</div>
-        </div>
-        <div class="sensor-temp-col">
-          <div class="sensor-temp placeholder" id="temp-0">—</div>
-          <div class="sensor-unit" id="unit-0"></div>
-        </div>
+        <div class="sensor-info"><div class="sensor-name">Palm</div><div class="sensor-sublabel">Sensor 1</div></div>
+        <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-0">—</div><div class="sensor-unit" id="unit-0"></div></div>
       </div>
       <div class="sensor-row" data-sensor="1" onclick="highlightSensor(1)">
         <div class="swatch"></div>
-        <div class="sensor-info">
-          <div class="sensor-name">Ulnar nerve</div>
-          <div class="sensor-sublabel">Sensor 2</div>
-        </div>
-        <div class="sensor-temp-col">
-          <div class="sensor-temp placeholder" id="temp-1">—</div>
-          <div class="sensor-unit" id="unit-1"></div>
-        </div>
+        <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 2</div></div>
+        <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-1">—</div><div class="sensor-unit" id="unit-1"></div></div>
       </div>
       <div class="sensor-row" data-sensor="2" onclick="highlightSensor(2)">
         <div class="swatch"></div>
-        <div class="sensor-info">
-          <div class="sensor-name">Medial nerve</div>
-          <div class="sensor-sublabel">Sensor 3</div>
-        </div>
-        <div class="sensor-temp-col">
-          <div class="sensor-temp placeholder" id="temp-2">—</div>
-          <div class="sensor-unit" id="unit-2"></div>
-        </div>
+        <div class="sensor-info"><div class="sensor-name">Median nerve</div><div class="sensor-sublabel">Sensor 3</div></div>
+        <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-2">—</div><div class="sensor-unit" id="unit-2"></div></div>
       </div>
       <div class="sensor-row" data-sensor="3" onclick="highlightSensor(3)">
         <div class="swatch"></div>
-        <div class="sensor-info">
-          <div class="sensor-name">Radial nerve</div>
-          <div class="sensor-sublabel">Sensor 4</div>
-        </div>
-        <div class="sensor-temp-col">
-          <div class="sensor-temp placeholder" id="temp-3">—</div>
-          <div class="sensor-unit" id="unit-3"></div>
-        </div>
+        <div class="sensor-info"><div class="sensor-name">Radial nerve</div><div class="sensor-sublabel">Sensor 4</div></div>
+        <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-3">—</div><div class="sensor-unit" id="unit-3"></div></div>
       </div>
       <div class="sensor-row" data-sensor="4" onclick="highlightSensor(4)">
         <div class="swatch"></div>
-        <div class="sensor-info">
-          <div class="sensor-name">Ulnar nerve</div>
-          <div class="sensor-sublabel">Sensor 5</div>
-        </div>
-        <div class="sensor-temp-col">
-          <div class="sensor-temp placeholder" id="temp-4">—</div>
-          <div class="sensor-unit" id="unit-4"></div>
-        </div>
+        <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 5</div></div>
+        <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-4">—</div><div class="sensor-unit" id="unit-4"></div></div>
       </div>
       <div class="sensor-row" data-sensor="5" onclick="highlightSensor(5)">
         <div class="swatch"></div>
-        <div class="sensor-info">
-          <div class="sensor-name">Elbow</div>
-          <div class="sensor-sublabel">Sensor 6</div>
-        </div>
-        <div class="sensor-temp-col">
-          <div class="sensor-temp placeholder" id="temp-5">—</div>
-          <div class="sensor-unit" id="unit-5"></div>
-        </div>
+        <div class="sensor-info"><div class="sensor-name">Elbow</div><div class="sensor-sublabel">Sensor 6</div></div>
+        <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-5">—</div><div class="sensor-unit" id="unit-5"></div></div>
       </div>
     </div>
 
-    <!-- Session stats -->
     <div class="stats-card">
       <div class="stats-title">Session stats</div>
       <div class="stats-grid">
@@ -603,31 +460,29 @@
           <div class="mt-value" id="stat-time">—</div>
         </div>
         <div class="meta-item" style="text-align:right;">
-          <div class="mt-label">Raw BLE</div>
-          <div class="mt-value" id="debug-raw">—</div>
+          <div class="mt-label">Robust avg method</div>
+          <div class="mt-value">Huber M-estimator</div>
         </div>
       </div>
     </div>
 
-    <!-- Connect -->
     <button id="connect-btn">
       <span id="btn-label">Connect to ForearmSense</span>
       <span class="btn-arrow">→</span>
     </button>
 
-  </div><!-- /right-panel -->
-</div><!-- /page-body -->
+  </div>
+</div>
 
 <script>
-/* ── BLE ───────────────────────────────────────────────── */
 const SERVICE_UUID        = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
-let bleDevice   = null;
-let isConnected = false;
+let bleDevice    = null;
+let isConnected  = false;
 let temperatures = Array(6).fill(null);
-let sessionMax  = null;
-let sessionMin  = null;
+let sessionMax   = null;
+let sessionMin   = null;
 
 const connectBtn = document.getElementById('connect-btn');
 const btnLabel   = document.getElementById('btn-label');
@@ -645,9 +500,9 @@ connectBtn.addEventListener('click', async () => {
   try {
     setStatus('connecting');
     bleDevice = await navigator.bluetooth.requestDevice({
-  filters: [{ name: 'ForearmSense' }],
-  optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
-});
+      filters: [{ name: 'ForearmSense' }],
+      optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
+    });
     bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
     const server  = await bleDevice.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
@@ -658,7 +513,7 @@ connectBtn.addEventListener('click', async () => {
     setStatus('connected');
     btnLabel.textContent = 'Disconnect';
   } catch (err) {
-    console.error(err);
+    console.error('BLE error:', err);
     setStatus('error');
     setTimeout(() => setStatus('idle'), 3000);
   }
@@ -678,39 +533,39 @@ function onDisconnected() {
 }
 
 function onDataReceived(event) {
-  const view = event.target.value;
+  // ESP32 sends JSON: {"t":[t1,t2,t3,t4,t5,t6],"robust":avg,"ts":millis}
+  const decoder = new TextDecoder('utf-8');
+  const jsonStr = decoder.decode(event.target.value);
 
-  // Raw hex
-  let hex = '';
-  for (let i = 0; i < view.byteLength; i++) {
-    hex += view.getUint8(i).toString(16).padStart(2,'0').toUpperCase();
-    if (i < view.byteLength - 1) hex += ' ';
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch (e) {
+    console.error('JSON parse error:', e, jsonStr);
+    return;
   }
 
-  // Parse 6 sensors × 2 bytes each
-  const count = Math.min(6, Math.floor(view.byteLength / 2));
-  for (let i = 0; i < count; i++) {
-    const raw = view.getInt16(i * 2, false);
-    temperatures[i] = (raw === 0x7FFF) ? null : raw * 0.0078125;
+  const t = parsed.t;
+  for (let i = 0; i < 6; i++) {
+    temperatures[i] = (t[i] === null || t[i] === undefined || isNaN(t[i])) ? null : t[i];
   }
 
   updateAllSensors();
-  updateStats();
+  updateStats(parsed.robust);
 
   const now = new Date();
   document.getElementById('stat-time').textContent =
-    now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   setStatus('reading');
   clearTimeout(window._rt);
   window._rt = setTimeout(() => setStatus('connected'), 700);
 }
 
-/* ── UI updates ──────────────────────────────────────── */
 function classify(t) {
   if (t === null) return null;
-  if (t > 37.5)   return 'hot';
-  if (t > 35.0)   return 'warn';
+  if (t > 37.5)  return 'hot';
+  if (t > 35.0)  return 'warn';
   return 'good';
 }
 
@@ -720,17 +575,21 @@ function updateAllSensors() {
     const cls = classify(t);
     const el  = document.getElementById('temp-' + i);
     const uel = document.getElementById('unit-' + i);
-    el.className = 'sensor-temp' + (t === null ? ' placeholder' : cls ? ' ' + cls : '');
+    el.className   = 'sensor-temp' + (t === null ? ' placeholder' : cls ? ' ' + cls : '');
     el.textContent = t === null ? '—' : t.toFixed(1);
     uel.textContent = t === null ? '' : '°C';
   }
 }
 
-function updateStats() {
+function updateStats(robustAvg) {
   const valid = temperatures.filter(t => t !== null);
   if (valid.length === 0) { resetStats(); return; }
 
-  const avg = valid.reduce((a,b) => a+b, 0) / valid.length;
+  // Use the Huber robust average from the ESP32 if available, else fallback
+  const avg = (robustAvg !== null && robustAvg !== undefined && !isNaN(robustAvg))
+    ? robustAvg
+    : valid.reduce((a, b) => a + b, 0) / valid.length;
+
   const max = Math.max(...valid);
   const min = Math.min(...valid);
 
@@ -750,29 +609,25 @@ function updateStats() {
 }
 
 function resetStats() {
-  ['stat-avg','stat-max','stat-min'].forEach(id => {
+  ['stat-avg', 'stat-max', 'stat-min'].forEach(id => {
     const el = document.getElementById(id);
     el.textContent = '—';
     el.className = 'sc-value placeholder';
   });
   document.getElementById('stat-time').textContent = '—';
-  document.getElementById('debug-raw').textContent = '—';
-  sessionMax = null; sessionMin = null;
+  sessionMax = null;
+  sessionMin = null;
 }
 
-/* ── Hotspot / sensor row interaction ─────────────────── */
 function highlightSensor(index) {
-  // Highlight row in list
   document.querySelectorAll('.sensor-row').forEach((r, i) => {
     r.classList.toggle('active', i === index);
   });
-  // Highlight hotspot button on model
   document.querySelectorAll('.Hotspot').forEach(h => {
     h.classList.toggle('active', parseInt(h.dataset.sensor) === index);
   });
 }
 
-/* ── Status ──────────────────────────────────────────── */
 function setStatus(state) {
   const map = {
     idle:       { label: 'Disconnected', dot: '' },
