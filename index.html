@@ -89,6 +89,8 @@
     100% { transform: scale(2.4); opacity: 0; }
   }
 
+
+
   .page-body {
     width: 100%;
     max-width: 860px;
@@ -125,6 +127,8 @@
     gap: 0;
     outline: none;
   }
+
+  
 
   .hotspot-dot {
     width: 14px; height: 14px;
@@ -569,21 +573,34 @@ function onDataReceived(event) {
 }
 
 function classify(t) {
-  if (t === null) return null;
+  if (t === null) return '-';
   if (t > 37.5)  return 'hot';
-  if (t > 35.0)  return 'warn';
+  if (t > 36.0 || t < 32.0)  return 'warn';
   return 'good';
+}
+
+
+function celsiusToFahrenheit(c) {
+  if (c === null) return null;
+  return (c * 9/5) + 32;
 }
 
 function updateAllSensors() {
   for (let i = 0; i < 6; i++) {
     const t   = temperatures[i];
     const cls = classify(t);
+    const f   = celsiusToFahrenheit(t);
     const el  = document.getElementById('temp-' + i);
     const uel = document.getElementById('unit-' + i);
     el.className   = 'sensor-temp' + (t === null ? ' placeholder' : cls ? ' ' + cls : '');
-    el.textContent = t === null ? '—' : t.toFixed(1);
-    uel.textContent = t === null ? '' : '°C';
+
+       if (t === null) {
+      el.textContent = '—';
+      uel.textContent = '';
+    } else {
+    el.textContent = t + ' / ' + (f === null ? '—' : f.toFixed(2));
+    uel.textContent = t === '-' ? '' : '°C / °F';
+    }
   }
 }
 
