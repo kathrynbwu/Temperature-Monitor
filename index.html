@@ -407,8 +407,9 @@
  /* ============================================================
     HEATER PAGE
     ============================================================ */
- /* Make the element panel and the side panel the same height. */
- #page-heater .right-panel { justify-content: space-between; }
+ /* Gap between the sensor panel and the target panel matches the 12px
+    grid gap between the panels and the diagram. */
+ #page-heater .right-panel { gap: 12px; }
 
  .heater-visual {
  min-height: 520px;
@@ -747,60 +748,34 @@
  </div>
  </div>
 
- <!-- Right column: status, limit sensors, controls -->
+ <!-- Right column: sensors + controls -->
  <div class="right-panel">
 
- <div class="stats-card">
- <div class="stats-title">Heater status</div>
- <div class="stats-grid">
- <div class="stat-cell">
- <div class="sc-label">Element</div>
- <div class="sc-value placeholder" id="hstat-element">—</div>
- </div>
- <div class="stat-cell">
- <div class="sc-label">Target</div>
- <div class="sc-value" id="hstat-target">33<span class="sc-unit"> °C</span></div>
- </div>
- <div class="stat-cell">
- <div class="sc-label">State</div>
- <div class="sc-value placeholder" id="hstat-state" style="font-size:16px;">Standby</div>
- </div>
- </div>
- <div class="stats-divider"></div>
- <div class="meta-row">
- <div class="meta-item">
- <div class="mt-label">Last update</div>
- <div class="mt-value" id="hstat-time">—</div>
- </div>
- <div class="meta-item" style="text-align:right;">
- <div class="mt-label">Safety cutoff</div>
- <div class="mt-value" id="hstat-cutoff">45.0 °C</div>
- </div>
- </div>
- </div>
-
  <div class="sensor-list">
+ <div class="sensor-row" data-sensor="0" style="cursor:default;">
+ <div class="swatch"></div>
+ <div class="sensor-info"><div class="sensor-name">Palm</div><div class="sensor-sublabel">Sensor 1</div></div>
+ <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-0">—</div><div class="sensor-unit" id="hunit-0"></div></div>
+ </div>
+ <div class="sensor-row" data-sensor="1" style="cursor:default;">
+ <div class="swatch"></div>
+ <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 2</div></div>
+ <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-1">—</div><div class="sensor-unit" id="hunit-1"></div></div>
+ </div>
+ <div class="sensor-row" data-sensor="2" style="cursor:default;">
+ <div class="swatch"></div>
+ <div class="sensor-info"><div class="sensor-name">Median nerve</div><div class="sensor-sublabel">Sensor 3</div></div>
+ <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-2">—</div><div class="sensor-unit" id="hunit-2"></div></div>
+ </div>
+ <div class="sensor-row" data-sensor="4" style="cursor:default;">
+ <div class="swatch"></div>
+ <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 5</div></div>
+ <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-4">—</div><div class="sensor-unit" id="hunit-4"></div></div>
+ </div>
  <div class="sensor-row" data-sensor="5" style="cursor:default;">
  <div class="swatch"></div>
- <div class="sensor-info">
- <div class="sensor-name">Limit sensor A</div>
- <div class="sensor-sublabel">Overheat guard</div>
- </div>
- <div class="sensor-temp-col">
- <div class="sensor-temp placeholder" id="guard-coil">—</div>
- <div class="sensor-unit" id="guard-coil-u"></div>
- </div>
- </div>
- <div class="sensor-row" data-sensor="3" style="cursor:default;">
- <div class="swatch"></div>
- <div class="sensor-info">
- <div class="sensor-name">Limit sensor B</div>
- <div class="sensor-sublabel">Overheat guard</div>
- </div>
- <div class="sensor-temp-col">
- <div class="sensor-temp placeholder" id="guard-skin">—</div>
- <div class="sensor-unit" id="guard-skin-u"></div>
- </div>
+ <div class="sensor-info"><div class="sensor-name">Elbow</div><div class="sensor-sublabel">Sensor 6</div></div>
+ <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-5">—</div><div class="sensor-unit" id="hunit-5"></div></div>
  </div>
  </div>
 
@@ -930,17 +905,20 @@ function updateAllSensors() {
  const t = temperatures[i];
  const cls = classify(t);
  const f = celsiusToFahrenheit(t);
- const el = document.getElementById('temp-' + i);
- const uel = document.getElementById('unit-' + i);
+ // Update both the Sensing page rows (temp-N) and the Heating page rows (htemp-N).
+ ['temp-', 'htemp-'].forEach(prefix => {
+ const el = document.getElementById(prefix + i);
+ const uel = document.getElementById((prefix === 'temp-' ? 'unit-' : 'hunit-') + i);
+ if (!el) return;
  el.className = 'sensor-temp' + (t === null ? ' placeholder' : cls ? ' ' + cls : '');
-
  if (t === null) {
  el.textContent = '—';
- uel.textContent = '';
+ if (uel) uel.textContent = '';
  } else {
  el.textContent = t + ' / ' + (f === null ? '—' : f.toFixed(2));
- uel.textContent = t === '-' ? '' : '°C / °F';
+ if (uel) uel.textContent = '°C / °F';
  }
+ });
  }
 }
 
@@ -1330,23 +1308,6 @@ function renderHeater() {
  heaterTempEl.innerHTML = HEATER.tempC.toFixed(1) + '<span class="hr-unit">°C</span>';
  heaterTempFEl.textContent = '= ' + f1(HEATER.tempC) + ' °F';
  }
-
- // Status grid
- const elEl = document.getElementById('hstat-element');
- elEl.innerHTML = HEATER.tempC === null ? '—' : HEATER.tempC.toFixed(1) + '<span class="sc-unit"> °C</span>';
- elEl.className = 'sc-value' + (HEATER.tempC === null ? ' placeholder' : '');
- document.getElementById('hstat-target').innerHTML = HEATER.targetC.toFixed(1) + '<span class="sc-unit"> °C</span>';
- const stEl = document.getElementById('hstat-state');
- stEl.textContent = STATE_TEXT[HEATER.state];
- stEl.className = 'sc-value';
- stEl.style.fontSize = '16px';
- document.getElementById('hstat-time').textContent = HEATER.lastUpdate
- ? HEATER.lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
- : '—';
-
- // Limit sensors
- setGuardRow('guard-coil', 'guard-coil-u', HEATER.guardCoilC, 38, 42);
- setGuardRow('guard-skin', 'guard-skin-u', HEATER.guardSkinC, 36, 38);
 
  // Controls
  targetValEl.textContent = HEATER.targetC.toFixed(1).replace(/\.0$/, '');
