@@ -7,799 +7,856 @@
 <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
- :root {
- --bg: #1c1c1e;
- --surface: #2c2c2e;
- --surface2: #3a3a3c;
- --border: rgba(255,255,255,0.08);
- --border2: rgba(255,255,255,0.14);
- --text: #f2f2f7;
- --muted: rgba(255,255,255,0.38);
- --subtle: rgba(255,255,255,0.55);
- --c1: #7ec8e3;
- --c2: #b5a4f5;
- --c3: #f5a4c0;
- --c4: #a4d4a4;
- --c5: #f5c97a;
- --c6: #f5a07a;
- --good: #6fcf97;
- --warn: #f2c94c;
- --hot: #eb5757;
- --font: -apple-system, 'Helvetica Neue', Arial, sans-serif;
- --radius: 14px;
- }
+:root {
+--bg: #1c1c1e;
+--surface: #2c2c2e;
+--surface2: #3a3a3c;
+--border: rgba(255,255,255,0.08);
+--border2: rgba(255,255,255,0.14);
+--text: #f2f2f7;
+--muted: rgba(255,255,255,0.38);
+--subtle: rgba(255,255,255,0.55);
+--c1: #7ec8e3;
+--c2: #b5a4f5;
+--c3: #f5a4c0;
+--c4: #a4d4a4;
+--c5: #f5c97a;
+--c6: #f5a07a;
+--good: #6fcf97;
+--warn: #f2c94c;
+--hot: #eb5757;
+--font: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+--radius: 14px;
+}
 
- *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
- body {
- background: var(--bg);
- color: var(--text);
- font-family: var(--font);
- min-height: 100vh;
- display: flex;
- flex-direction: column;
- align-items: center;
- padding: 0 16px 60px;
- }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
- header {
- width: 100%;
- max-width: 860px;
- padding: 32px 0 0;
- display: flex;
- justify-content: space-between;
- align-items: center;
- }
- .wordmark {
- font-size: 15px;
- font-weight: 600;
- letter-spacing: 0.12em;
- text-transform: uppercase;
- color: var(--subtle);
- }
- .status-pill {
- display: flex;
- align-items: center;
- gap: 7px;
- font-size: 11px;
- letter-spacing: 0.08em;
- text-transform: uppercase;
- color: var(--muted);
- }
- .dot {
- width: 7px; height: 7px;
- border-radius: 50%;
- background: var(--muted);
- position: relative; flex-shrink: 0;
- }
- .dot.live::after, .dot.pulse::after {
- content: '';
- position: absolute;
- inset: -3px;
- border-radius: 50%;
- border: 1px solid currentColor;
- opacity: 0;
- animation: ripple 2s ease-out infinite;
- }
- .dot.live { background: var(--good); color: var(--good); }
- .dot.pulse { background: var(--warn); color: var(--warn); }
- .dot.pulse::after { animation-duration: 0.7s; }
- .dot.err { background: var(--hot); }
- @keyframes ripple {
- 0% { transform: scale(0.5); opacity: 1; }
- 100% { transform: scale(2.4); opacity: 0; }
- }
 
- /* Let the page children (.page-body, .chart-card) participate in the body's
-    centered full-width layout directly, exactly like the original single-page
-    version. The [hidden] rule below still hides the inactive page. */
- main { display: contents; }
+body {
+background: var(--bg);
+color: var(--text);
+font-family: var(--font);
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 0 16px 60px;
+}
 
- .page-body {
- width: 100%;
- max-width: 860px;
- margin-top: 20px;
- display: grid;
- grid-template-columns: 1fr 320px;
- gap: 12px;
- align-items: stretch;
- }
 
- .viewer-card {
- background: var(--surface);
- border-radius: var(--radius);
- border: 0.5px solid var(--border);
- overflow: hidden;
- position: relative;
- display: flex;
- flex-direction: column;
- }
+header {
+width: 100%;
+max-width: 860px;
+padding: 32px 0 0;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.wordmark {
+font-size: 15px;
+font-weight: 600;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(--subtle);
+}
+.status-pill {
+display: flex;
+align-items: center;
+gap: 7px;
+font-size: 11px;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+color: var(--muted);
+}
+.dot {
+width: 7px; height: 7px;
+border-radius: 50%;
+background: var(--muted);
+position: relative; flex-shrink: 0;
+}
+.dot.live::after, .dot.pulse::after {
+content: '';
+position: absolute;
+inset: -3px;
+border-radius: 50%;
+border: 1px solid currentColor;
+opacity: 0;
+animation: ripple 2s ease-out infinite;
+}
+.dot.live { background: var(--good); color: var(--good); }
+.dot.pulse { background: var(--warn); color: var(--warn); }
+.dot.pulse::after { animation-duration: 0.7s; }
+.dot.err { background: var(--hot); }
+@keyframes ripple {
+0% { transform: scale(0.5); opacity: 1; }
+100% { transform: scale(2.4); opacity: 0; }
+}
 
- model-viewer {
- width: 100%;
- flex: 1;
- min-height: 520px;
- background: transparent;
- --poster-color: transparent;
- }
 
- .Hotspot {
- background: none;
- border: none;
- padding: 0;
- cursor: pointer;
- display: flex;
- flex-direction: column;
- align-items: center;
- gap: 0;
- outline: none;
- }
+/* Let the page children (.page-body, .chart-card) participate in the body's
+   centered full-width layout directly, exactly like the original single-page
+   version. The [hidden] rule below still hides the inactive page. */
+main { display: contents; }
 
- .hotspot-dot {
- width: 14px; height: 14px;
- border-radius: 50%;
- border: 2px solid rgba(255,255,255,0.7);
- transition: transform 0.2s;
- position: relative;
- }
- .hotspot-dot::after {
- content: '';
- position: absolute;
- inset: -4px;
- border-radius: 50%;
- border: 1.5px solid currentColor;
- opacity: 0.4;
- animation: ripple 2.2s ease-out infinite;
- }
- .Hotspot:hover .hotspot-dot { transform: scale(1.3); }
 
- .Hotspot[slot="hotspot-1"] .hotspot-dot { background: var(--c1); color: var(--c1); }
- .Hotspot[slot="hotspot-2"] .hotspot-dot { background: var(--c2); color: var(--c2); }
- .Hotspot[slot="hotspot-3"] .hotspot-dot { background: var(--c3); color: var(--c3); }
- .Hotspot[slot="hotspot-5"] .hotspot-dot { background: var(--c4); color: var(--c4); }
- .Hotspot[slot="hotspot-6"] .hotspot-dot { background: var(--c5); color: var(--c5); }
- .Hotspot[slot="hotspot-7"] .hotspot-dot { background: var(--c6); color: var(--c6); }
+.page-body {
+width: 100%;
+max-width: 860px;
+margin-top: 20px;
+display: grid;
+grid-template-columns: 1fr 320px;
+gap: 12px;
+align-items: stretch;
+}
 
- .HotspotAnnotation {
- background: rgba(28,28,30,0.9);
- border: 0.5px solid var(--border2);
- border-radius: 8px;
- padding: 5px 10px;
- font-size: 11px;
- font-weight: 500;
- color: var(--text);
- white-space: nowrap;
- margin-top: 6px;
- pointer-events: none;
- opacity: 0;
- transform: translateY(4px);
- transition: opacity 0.2s, transform 0.2s;
- }
- .Hotspot:hover .HotspotAnnotation,
- .Hotspot.active .HotspotAnnotation {
- opacity: 1;
- transform: translateY(0);
- }
 
- .progress-bar { display: flex; }
- .progress-bar.hide { display: none; }
- .update-bar { background: var(--c1); width: 0%; height: 2px; border-radius: 2px; }
+.viewer-card {
+background: var(--surface);
+border-radius: var(--radius);
+border: 0.5px solid var(--border);
+overflow: hidden;
+position: relative;
+display: flex;
+flex-direction: column;
+}
 
- #ar-button {
- background: rgba(44,44,46,0.9);
- border: 0.5px solid var(--border2);
- border-radius: 20px;
- color: var(--text);
- font-family: var(--font);
- font-size: 12px;
- font-weight: 500;
- padding: 8px 16px;
- cursor: pointer;
- position: absolute;
- bottom: 16px;
- right: 16px;
- }
- #ar-prompt { display: none; }
 
- .right-panel { display: flex; flex-direction: column; gap: 8px; }
+model-viewer {
+width: 100%;
+flex: 1;
+min-height: 520px;
+background: transparent;
+--poster-color: transparent;
+}
 
- .sensor-list {
- background: var(--surface);
- border-radius: var(--radius);
- border: 0.5px solid var(--border);
- overflow: hidden;
- }
 
- .sensor-row {
- display: flex;
- align-items: center;
- gap: 12px;
- padding: 13px 16px;
- border-bottom: 0.5px solid var(--border);
- cursor: pointer;
- transition: background 0.15s;
- position: relative;
- }
- .sensor-row:last-child { border-bottom: none; }
- .sensor-row:hover, .sensor-row.active { background: var(--surface2); }
+.Hotspot {
+background: none;
+border: none;
+padding: 0;
+cursor: pointer;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 0;
+outline: none;
+}
 
- .sensor-row::before {
- content: '';
- position: absolute;
- left: 0; top: 8px; bottom: 8px;
- width: 3px;
- border-radius: 2px;
- opacity: 0;
- transition: opacity 0.3s;
- }
- .sensor-row.active::before,
- .sensor-row:hover::before { opacity: 1; }
- .sensor-row[data-sensor="0"]::before { background: var(--c1); }
- .sensor-row[data-sensor="1"]::before { background: var(--c2); }
- .sensor-row[data-sensor="2"]::before { background: var(--c3); }
- .sensor-row[data-sensor="3"]::before { background: var(--c4); }
- .sensor-row[data-sensor="4"]::before { background: var(--c5); }
- .sensor-row[data-sensor="5"]::before { background: var(--c6); }
 
- .swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
- .sensor-row[data-sensor="0"] .swatch { background: var(--c1); }
- .sensor-row[data-sensor="1"] .swatch { background: var(--c2); }
- .sensor-row[data-sensor="2"] .swatch { background: var(--c3); }
- .sensor-row[data-sensor="3"] .swatch { background: var(--c4); }
- .sensor-row[data-sensor="4"] .swatch { background: var(--c5); }
- .sensor-row[data-sensor="5"] .swatch { background: var(--c6); }
+.hotspot-dot {
+width: 14px; height: 14px;
+border-radius: 50%;
+border: 2px solid rgba(255,255,255,0.7);
+transition: transform 0.2s;
+position: relative;
+}
+.hotspot-dot::after {
+content: '';
+position: absolute;
+inset: -4px;
+border-radius: 50%;
+border: 1.5px solid currentColor;
+opacity: 0.4;
+animation: ripple 2.2s ease-out infinite;
+}
+.Hotspot:hover .hotspot-dot { transform: scale(1.3); }
 
- .sensor-info { flex: 1; min-width: 0; }
- .sensor-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
- .sensor-sublabel { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
- .sensor-temp-col { text-align: right; flex-shrink: 0; }
- .sensor-temp { font-size: 18px; font-weight: 300; letter-spacing: -0.02em; color: var(--muted); transition: color 0.4s; }
- .sensor-temp.good { color: var(--good); }
- .sensor-temp.warn { color: var(--warn); }
- .sensor-temp.hot { color: var(--hot); }
- .sensor-unit { font-size: 11px; color: var(--muted); }
+.Hotspot[slot="hotspot-1"] .hotspot-dot { background: var(--c1); color: var(--c1); }
+.Hotspot[slot="hotspot-2"] .hotspot-dot { background: var(--c2); color: var(--c2); }
+.Hotspot[slot="hotspot-3"] .hotspot-dot { background: var(--c3); color: var(--c3); }
+.Hotspot[slot="hotspot-5"] .hotspot-dot { background: var(--c4); color: var(--c4); }
+.Hotspot[slot="hotspot-6"] .hotspot-dot { background: var(--c5); color: var(--c5); }
+.Hotspot[slot="hotspot-7"] .hotspot-dot { background: var(--c6); color: var(--c6); }
 
- .stats-card {
- background: var(--surface);
- border-radius: var(--radius);
- border: 0.5px solid var(--border);
- padding: 18px 18px 16px;
- }
- .stats-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
- .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
- .stat-cell { display: flex; flex-direction: column; gap: 4px; }
- .stat-cell:nth-child(2) { text-align: center; }
- .stat-cell:nth-child(3) { text-align: right; }
- .sc-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
- .sc-value { font-size: 20px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
- .sc-unit { font-size: 11px; color: var(--muted); }
- .sc-value.placeholder { color: var(--muted); font-size: 16px; }
 
- .stats-divider { height: 0.5px; background: var(--border); margin: 14px 0; }
+.HotspotAnnotation {
+background: rgba(28,28,30,0.9);
+border: 0.5px solid var(--border2);
+border-radius: 8px;
+padding: 5px 10px;
+font-size: 11px;
+font-weight: 500;
+color: var(--text);
+white-space: nowrap;
+margin-top: 6px;
+pointer-events: none;
+opacity: 0;
+transform: translateY(4px);
+transition: opacity 0.2s, transform 0.2s;
+}
+.Hotspot:hover .HotspotAnnotation,
+.Hotspot.active .HotspotAnnotation {
+opacity: 1;
+transform: translateY(0);
+}
 
- .meta-row { display: flex; justify-content: space-between; align-items: center; }
- .meta-item { display: flex; flex-direction: column; gap: 2px; }
- .mt-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
- .mt-value { font-size: 12px; color: var(--subtle); font-variant-numeric: tabular-nums; }
 
- /* ---- Realtime chart card ---- */
- .chart-card {
- width: 100%;
- max-width: 860px;
- margin-top: 28px;
- background: var(--surface);
- border-radius: var(--radius);
- border: 0.5px solid var(--border);
- padding: 18px 18px 16px;
- }
- .chart-head {
- display: flex;
- justify-content: space-between;
- align-items: center;
- margin-bottom: 14px;
- }
- .chart-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.progress-bar { display: flex; }
+.progress-bar.hide { display: none; }
+.update-bar { background: var(--c1); width: 0%; height: 2px; border-radius: 2px; }
 
- .unit-toggle {
- display: inline-flex;
- background: var(--bg);
- border: 0.5px solid var(--border2);
- border-radius: 20px;
- padding: 2px;
- }
- .unit-opt {
- background: none;
- border: none;
- color: var(--muted);
- font-family: var(--font);
- font-size: 12px;
- font-weight: 500;
- letter-spacing: 0.02em;
- padding: 5px 14px;
- border-radius: 18px;
- cursor: pointer;
- transition: background 0.18s, color 0.18s;
- }
- .unit-opt:hover { color: var(--subtle); }
- .unit-opt.active { background: var(--surface2); color: var(--text); }
 
- .chart-wrap {
- position: relative;
- height: 280px;
- width: 100%;
- }
+#ar-button {
+background: rgba(44,44,46,0.9);
+border: 0.5px solid var(--border2);
+border-radius: 20px;
+color: var(--text);
+font-family: var(--font);
+font-size: 12px;
+font-weight: 500;
+padding: 8px 16px;
+cursor: pointer;
+position: absolute;
+bottom: 16px;
+right: 16px;
+}
+#ar-prompt { display: none; }
 
- #connect-btn {
- width: 100%;
- background: var(--surface);
- border: 0.5px solid var(--border);
- border-radius: var(--radius);
- color: var(--text);
- font-family: var(--font);
- font-size: 13px;
- font-weight: 500;
- padding: 16px 18px;
- cursor: pointer;
- display: flex;
- justify-content: space-between;
- align-items: center;
- transition: background 0.18s, border-color 0.18s;
- }
- #connect-btn:hover:not(:disabled) { background: var(--surface2); border-color: var(--border2); }
- #connect-btn:disabled { opacity: 0.35; cursor: not-allowed; }
- .btn-arrow { color: var(--muted); transition: transform 0.2s; font-size: 16px; }
- #connect-btn:hover:not(:disabled) .btn-arrow { transform: translateX(4px); }
 
- #compat-warn {
- display: none;
- width: 100%;
- max-width: 860px;
- margin-top: 10px;
- background: rgba(235,87,87,0.07);
- border: 0.5px solid rgba(235,87,87,0.22);
- border-radius: 12px;
- padding: 12px 18px;
- font-size: 12px;
- color: var(--hot);
- }
+.right-panel { display: flex; flex-direction: column; gap: 8px; }
 
- @media (max-width: 680px) {
- .page-body { grid-template-columns: 1fr; }
- model-viewer { height: 360px; }
- .chart-wrap { height: 240px; }
- }
 
- /* ============================================================
-    PAGE NAVIGATION
-    ============================================================ */
- .main-nav {
- width: 100%;
- max-width: 860px;
- margin-top: 22px;
- display: flex;
- gap: 4px;
- background: var(--surface);
- border: 0.5px solid var(--border);
- border-radius: 22px;
- padding: 4px;
- }
- .nav-tab {
- flex: 1;
- background: none;
- border: none;
- color: var(--muted);
- font-family: var(--font);
- font-size: 13px;
- font-weight: 500;
- letter-spacing: 0.02em;
- padding: 9px 14px;
- border-radius: 18px;
- cursor: pointer;
- transition: background 0.18s, color 0.18s;
- }
- .nav-tab:hover { color: var(--subtle); }
- .nav-tab.active { background: var(--surface2); color: var(--text); }
- .nav-tab:focus-visible { outline: 2px solid var(--c1); outline-offset: 2px; }
+.sensor-list {
+background: var(--surface);
+border-radius: var(--radius);
+border: 0.5px solid var(--border);
+overflow: hidden;
+}
 
- [hidden] { display: none !important; }
 
- /* ============================================================
-    HEATER PAGE
-    ============================================================ */
- /* Gap between the sensor panel and the target panel matches the 12px
-    grid gap between the panels and the diagram. */
- #page-heater .right-panel { gap: 12px; }
+.sensor-row {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 13px 16px;
+border-bottom: 0.5px solid var(--border);
+cursor: pointer;
+transition: background 0.15s;
+position: relative;
+}
+.sensor-row:last-child { border-bottom: none; }
+.sensor-row:hover, .sensor-row.active { background: var(--surface2); }
 
- .heater-visual {
- min-height: 520px;
- align-items: center;
- justify-content: center;
- position: relative;
- overflow: hidden;
- }
- .heater-state-label {
- position: absolute;
- top: 18px; left: 18px;
- z-index: 3;
- display: flex;
- align-items: center;
- gap: 7px;
- font-size: 11px;
- letter-spacing: 0.1em;
- text-transform: uppercase;
- color: var(--muted);
- }
 
- /* Temperature-driven radial glow behind the heating element.
-    Color + opacity are set from JS based on the live element temp
-    (orange when cool, deepening to red as it climbs). */
- .heater-glow {
- position: absolute;
- width: 320px; height: 480px;
- border-radius: 50%;
- filter: blur(14px);
- pointer-events: none;
- opacity: 0;
- transition: opacity 0.8s ease, background 0.8s ease;
- animation: heaterPulse 3.4s ease-in-out infinite;
- }
- @keyframes heaterPulse {
- 0%, 100% { transform: scale(0.95); }
- 50% { transform: scale(1.06); }
- }
+.sensor-row::before {
+content: '';
+position: absolute;
+left: 0; top: 8px; bottom: 8px;
+width: 3px;
+border-radius: 2px;
+opacity: 0;
+transition: opacity 0.3s;
+}
+.sensor-row.active::before,
+.sensor-row:hover::before { opacity: 1; }
+.sensor-row[data-sensor="0"]::before { background: var(--c1); }
+.sensor-row[data-sensor="1"]::before { background: var(--c2); }
+.sensor-row[data-sensor="2"]::before { background: var(--c3); }
+.sensor-row[data-sensor="3"]::before { background: var(--c4); }
+.sensor-row[data-sensor="4"]::before { background: var(--c5); }
+.sensor-row[data-sensor="5"]::before { background: var(--c6); }
 
- .coil-svg {
- position: relative;
- z-index: 1;
- width: auto;
- height: 80%;
- max-height: 440px;
- max-width: 62%;
- }
- .coil-path { animation: coilGlow 3.4s ease-in-out infinite; }
- @keyframes coilGlow {
- 0%, 100% { opacity: 0.78; }
- 50% { opacity: 1; }
- }
 
- .heater-readout {
- position: absolute;
- left: 0; right: 0;
- bottom: 26px;
- z-index: 2;
- text-align: center;
- }
- .hr-temp {
- font-size: 54px;
- font-weight: 200;
- letter-spacing: -0.03em;
- line-height: 1;
- color: var(--text);
- font-variant-numeric: tabular-nums;
- }
- .hr-temp.placeholder { color: var(--muted); }
- .hr-temp .hr-unit { font-size: 20px; color: var(--muted); margin-left: 2px; }
- .hr-sub { font-size: 12px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.sensor-row[data-sensor="0"] .swatch { background: var(--c1); }
+.sensor-row[data-sensor="1"] .swatch { background: var(--c2); }
+.sensor-row[data-sensor="2"] .swatch { background: var(--c3); }
+.sensor-row[data-sensor="3"] .swatch { background: var(--c4); }
+.sensor-row[data-sensor="4"] .swatch { background: var(--c5); }
+.sensor-row[data-sensor="5"] .swatch { background: var(--c6); }
 
- .target-stepper {
- display: flex;
- align-items: center;
- justify-content: space-between;
- gap: 12px;
- margin-top: 2px;
- }
- .step-btn {
- width: 40px; height: 40px;
- flex-shrink: 0;
- border-radius: 50%;
- background: var(--bg);
- border: 0.5px solid var(--border2);
- color: var(--text);
- font-family: var(--font);
- font-size: 22px;
- font-weight: 300;
- line-height: 1;
- cursor: pointer;
- transition: background 0.15s;
- }
- .step-btn:hover { background: var(--surface2); }
- .step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
- .target-val { font-size: 30px; font-weight: 200; letter-spacing: -0.02em; color: var(--text); }
- .target-val .sc-unit { font-size: 13px; }
 
- #heater-toggle {
- width: 100%;
- margin-top: 12px;
- background: var(--surface);
- border: 0.5px solid var(--border);
- border-radius: var(--radius);
- color: var(--text);
- font-family: var(--font);
- font-size: 13px;
- font-weight: 500;
- padding: 16px 18px;
- cursor: pointer;
- display: flex;
- justify-content: space-between;
- align-items: center;
- transition: background 0.18s, border-color 0.18s, color 0.18s;
- }
- #heater-toggle:hover { background: var(--surface2); border-color: var(--border2); }
- #heater-toggle.on {
- background: rgba(235,87,87,0.10);
- border-color: rgba(235,87,87,0.30);
- color: var(--hot);
- }
- #heater-toggle .btn-arrow { color: var(--muted); font-size: 16px; }
- #heater-toggle.on .btn-arrow { color: var(--hot); }
+.sensor-info { flex: 1; min-width: 0; }
+.sensor-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sensor-sublabel { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
- @media (max-width: 680px) {
- .heater-visual { min-height: 380px; }
- .hr-temp { font-size: 44px; }
- }
+
+.sensor-temp-col { text-align: right; flex-shrink: 0; }
+.sensor-temp { font-size: 18px; font-weight: 300; letter-spacing: -0.02em; color: var(--muted); transition: color 0.4s; }
+.sensor-temp.good { color: var(--good); }
+.sensor-temp.warn { color: var(--warn); }
+.sensor-temp.hot { color: var(--hot); }
+.sensor-unit { font-size: 11px; color: var(--muted); }
+
+
+.stats-card {
+background: var(--surface);
+border-radius: var(--radius);
+border: 0.5px solid var(--border);
+padding: 18px 18px 16px;
+}
+.stats-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+.stat-cell { display: flex; flex-direction: column; gap: 4px; }
+.stat-cell:nth-child(2) { text-align: center; }
+.stat-cell:nth-child(3) { text-align: right; }
+.sc-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.sc-value { font-size: 20px; font-weight: 300; letter-spacing: -0.02em; color: var(--text); }
+.sc-unit { font-size: 11px; color: var(--muted); }
+.sc-value.placeholder { color: var(--muted); font-size: 16px; }
+
+
+.stats-divider { height: 0.5px; background: var(--border); margin: 14px 0; }
+
+
+.meta-row { display: flex; justify-content: space-between; align-items: center; }
+.meta-item { display: flex; flex-direction: column; gap: 2px; }
+.mt-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.mt-value { font-size: 12px; color: var(--subtle); font-variant-numeric: tabular-nums; }
+
+
+/* ---- Realtime chart card ---- */
+.chart-card {
+width: 100%;
+max-width: 860px;
+margin-top: 28px;
+background: var(--surface);
+border-radius: var(--radius);
+border: 0.5px solid var(--border);
+padding: 18px 18px 16px;
+}
+.chart-head {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 14px;
+}
+.chart-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+
+.unit-toggle {
+display: inline-flex;
+background: var(--bg);
+border: 0.5px solid var(--border2);
+border-radius: 20px;
+padding: 2px;
+}
+.unit-opt {
+background: none;
+border: none;
+color: var(--muted);
+font-family: var(--font);
+font-size: 12px;
+font-weight: 500;
+letter-spacing: 0.02em;
+padding: 5px 14px;
+border-radius: 18px;
+cursor: pointer;
+transition: background 0.18s, color 0.18s;
+}
+.unit-opt:hover { color: var(--subtle); }
+.unit-opt.active { background: var(--surface2); color: var(--text); }
+
+
+.chart-wrap {
+position: relative;
+height: 280px;
+width: 100%;
+}
+
+
+#connect-btn {
+width: 100%;
+background: var(--surface);
+border: 0.5px solid var(--border);
+border-radius: var(--radius);
+color: var(--text);
+font-family: var(--font);
+font-size: 13px;
+font-weight: 500;
+padding: 16px 18px;
+cursor: pointer;
+display: flex;
+justify-content: space-between;
+align-items: center;
+transition: background 0.18s, border-color 0.18s;
+}
+#connect-btn:hover:not(:disabled) { background: var(--surface2); border-color: var(--border2); }
+#connect-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-arrow { color: var(--muted); transition: transform 0.2s; font-size: 16px; }
+#connect-btn:hover:not(:disabled) .btn-arrow { transform: translateX(4px); }
+
+
+#compat-warn {
+display: none;
+width: 100%;
+max-width: 860px;
+margin-top: 10px;
+background: rgba(235,87,87,0.07);
+border: 0.5px solid rgba(235,87,87,0.22);
+border-radius: 12px;
+padding: 12px 18px;
+font-size: 12px;
+color: var(--hot);
+}
+
+
+@media (max-width: 680px) {
+.page-body { grid-template-columns: 1fr; }
+model-viewer { height: 360px; }
+.chart-wrap { height: 240px; }
+}
+
+
+/* ============================================================
+   PAGE NAVIGATION
+   ============================================================ */
+.main-nav {
+width: 100%;
+max-width: 860px;
+margin-top: 22px;
+display: flex;
+gap: 4px;
+background: var(--surface);
+border: 0.5px solid var(--border);
+border-radius: 22px;
+padding: 4px;
+}
+.nav-tab {
+flex: 1;
+background: none;
+border: none;
+color: var(--muted);
+font-family: var(--font);
+font-size: 13px;
+font-weight: 500;
+letter-spacing: 0.02em;
+padding: 9px 14px;
+border-radius: 18px;
+cursor: pointer;
+transition: background 0.18s, color 0.18s;
+}
+.nav-tab:hover { color: var(--subtle); }
+.nav-tab.active { background: var(--surface2); color: var(--text); }
+.nav-tab:focus-visible { outline: 2px solid var(--c1); outline-offset: 2px; }
+
+
+[hidden] { display: none !important; }
+
+
+/* ============================================================
+   HEATER PAGE
+   ============================================================ */
+/* Heating page: a single centered column — diagram on top, target controls
+   directly beneath it. Everything is sized to stay inside the viewport so the
+   target panel is visible the moment you switch to this tab (no scrolling). */
+#page-heater .page-body {
+display: flex;
+flex-direction: column;
+align-items: center;
+max-width: 460px;
+gap: 12px;
+}
+#page-heater .viewer-card.heater-visual {
+width: 100%;
+min-height: 0;
+height: clamp(260px, 46vh, 400px);
+}
+#page-heater .right-panel { width: 100%; gap: 12px; }
+
+
+.heater-visual {
+min-height: 520px;
+align-items: center;
+justify-content: center;
+position: relative;
+overflow: hidden;
+}
+.heater-state-label {
+position: absolute;
+top: 18px; left: 18px;
+z-index: 3;
+display: flex;
+align-items: center;
+gap: 7px;
+font-size: 11px;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: var(--muted);
+}
+
+
+/* Temperature-driven radial glow behind the heating element.
+   Color + opacity are set from JS based on the live element temp
+   (orange when cool, deepening to red as it climbs). */
+.heater-glow {
+position: absolute;
+width: 320px; height: 480px;
+border-radius: 50%;
+filter: blur(14px);
+pointer-events: none;
+opacity: 0;
+transition: opacity 0.8s ease, background 0.8s ease;
+animation: heaterPulse 3.4s ease-in-out infinite;
+}
+@keyframes heaterPulse {
+0%, 100% { transform: scale(0.95); }
+50% { transform: scale(1.06); }
+}
+
+
+.coil-svg {
+position: relative;
+z-index: 1;
+width: auto;
+height: 80%;
+max-height: 440px;
+max-width: 62%;
+}
+.coil-path { animation: coilGlow 3.4s ease-in-out infinite; }
+@keyframes coilGlow {
+0%, 100% { opacity: 0.78; }
+50% { opacity: 1; }
+}
+
+
+.heater-readout {
+position: absolute;
+left: 0; right: 0;
+bottom: 26px;
+z-index: 2;
+text-align: center;
+}
+.hr-temp {
+font-size: 54px;
+font-weight: 200;
+letter-spacing: -0.03em;
+line-height: 1;
+color: var(--text);
+font-variant-numeric: tabular-nums;
+}
+.hr-temp.placeholder { color: var(--muted); }
+.hr-temp .hr-unit { font-size: 20px; color: var(--muted); margin-left: 2px; }
+.hr-sub { font-size: 12px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+
+
+.target-stepper {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+margin-top: 2px;
+}
+.step-btn {
+width: 40px; height: 40px;
+flex-shrink: 0;
+border-radius: 50%;
+background: var(--bg);
+border: 0.5px solid var(--border2);
+color: var(--text);
+font-family: var(--font);
+font-size: 22px;
+font-weight: 300;
+line-height: 1;
+cursor: pointer;
+transition: background 0.15s;
+}
+.step-btn:hover { background: var(--surface2); }
+.step-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.target-val { font-size: 30px; font-weight: 200; letter-spacing: -0.02em; color: var(--text); }
+.target-val .sc-unit { font-size: 13px; }
+
+
+#heater-toggle {
+width: 100%;
+margin-top: 12px;
+background: var(--surface);
+border: 0.5px solid var(--border);
+border-radius: var(--radius);
+color: var(--text);
+font-family: var(--font);
+font-size: 13px;
+font-weight: 500;
+padding: 16px 18px;
+cursor: pointer;
+display: flex;
+justify-content: space-between;
+align-items: center;
+transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+#heater-toggle:hover { background: var(--surface2); border-color: var(--border2); }
+#heater-toggle.on {
+background: rgba(235,87,87,0.10);
+border-color: rgba(235,87,87,0.30);
+color: var(--hot);
+}
+#heater-toggle .btn-arrow { color: var(--muted); font-size: 16px; }
+#heater-toggle.on .btn-arrow { color: var(--hot); }
+
+
+@media (max-width: 680px) {
+.heater-visual { min-height: 380px; }
+.hr-temp { font-size: 44px; }
+}
 </style>
 </head>
 <body>
 
-<header>
- <div style="display:flex; align-items:center; gap:12px;">
- <div class="wordmark">Sensing / Heating</div>
- <img src="./logo.png" alt="Rhythmlink Logo" style="width:32px; height:32px;">
- </div>
 
- <div class="status-pill">
- <div class="dot" id="status-dot"></div>
- <span id="status-text">Disconnected</span>
- </div>
+<header>
+<div style="display:flex; align-items:center; gap:12px;">
+<div class="wordmark">Sensing / Heating</div>
+<img src="./logo.png" alt="Rhythmlink Logo" style="width:32px; height:32px;">
+</div>
+
+
+<div class="status-pill">
+<div class="dot" id="status-dot"></div>
+<span id="status-text">Disconnected</span>
+</div>
 </header>
 
+
 <nav class="main-nav" id="main-nav">
- <button class="nav-tab active" data-page="monitor">Sensing</button>
- <button class="nav-tab" data-page="heater">Heating</button>
+<button class="nav-tab active" data-page="monitor">Sensing</button>
+<button class="nav-tab" data-page="heater">Heating</button>
 </nav>
 
+
 <div id="compat-warn">
- Web Bluetooth requires Chrome or Edge. Safari and Firefox are not supported.
+Web Bluetooth requires Chrome or Edge. Safari and Firefox are not supported.
 </div>
+
 
 <main id="page-monitor">
 
+
 <div class="page-body">
 
- <div class="viewer-card">
- <model-viewer
- src="forearm.glb"
- ar ar-modes="webxr scene-viewer quick-look"
- camera-controls
- tone-mapping="neutral"
- shadow-intensity="1"
- camera-orbit="90.1deg 79.89deg 8.304m"
- field-of-view="30deg">
 
- <button class="Hotspot" slot="hotspot-1"
- data-position="-0.69997724680618m -0.11552065133166023m 0.17079516065871475m"
- data-normal="0.8423202204735467m 0.34778762765373966m 0.41175285333847983m"
- data-visibility-attribute="visible"
- data-sensor="0" onclick="highlightSensor(0)">
- <div class="hotspot-dot"></div>
- <div class="HotspotAnnotation">Palm · S1</div>
- </button>
+<div class="viewer-card">
+<model-viewer
+src="forearm.glb"
+ar ar-modes="webxr scene-viewer quick-look"
+camera-controls
+tone-mapping="neutral"
+shadow-intensity="1"
+camera-orbit="90.1deg 79.89deg 8.304m"
+field-of-view="30deg">
 
- <button class="Hotspot" slot="hotspot-2"
- data-position="-0.7471269449800015m -0.6786698846596868m 0.5808744746301238m"
- data-normal="0.9155021223458567m 0.10709464204948141m 0.38779711399715916m"
- data-visibility-attribute="visible"
- data-sensor="1" onclick="highlightSensor(1)">
- <div class="hotspot-dot"></div>
- <div class="HotspotAnnotation">Ulnar n. · S2</div>
- </button>
 
- <button class="Hotspot" slot="hotspot-3"
- data-position="-0.6291996777474168m -1.135369329236927m 0.4683082277890259m"
- data-normal="0.9710872044370789m 0.23502032610078963m -0.041893766816287335m"
- data-visibility-attribute="visible"
- data-sensor="2" onclick="highlightSensor(2)">
- <div class="hotspot-dot"></div>
- <div class="HotspotAnnotation">Median n. · S3</div>
- </button>
+<button class="Hotspot" slot="hotspot-1"
+data-position="-0.69997724680618m -0.11552065133166023m 0.17079516065871475m"
+data-normal="0.8423202204735467m 0.34778762765373966m 0.41175285333847983m"
+data-visibility-attribute="visible"
+data-sensor="0" onclick="highlightSensor(0)">
+<div class="hotspot-dot"></div>
+<div class="HotspotAnnotation">Palm · S1</div>
+</button>
 
- <button class="Hotspot" slot="hotspot-5"
- data-position="-1.1208746614563028m -1.267461999523452m 0.4805872188318885m"
- data-normal="-0.999736852566426m 0.014744562933780531m -0.017573374305125688m"
- data-visibility-attribute="visible"
- data-sensor="3" onclick="highlightSensor(3)">
- <div class="hotspot-dot"></div>
- <div class="HotspotAnnotation">Radial n. · S4</div>
- </button>
 
- <button class="Hotspot" slot="hotspot-6"
- data-position="-0.5300969363344729m -1.6467561604892647m 0.6216830608551476m"
- data-normal="0.9058887278678288m 0.21533448597419708m 0.3646870876137994m"
- data-visibility-attribute="visible"
- data-sensor="4" onclick="highlightSensor(4)">
- <div class="hotspot-dot"></div>
- <div class="HotspotAnnotation">Ulnar n. · S5</div>
- </button>
+<button class="Hotspot" slot="hotspot-2"
+data-position="-0.7471269449800015m -0.6786698846596868m 0.5808744746301238m"
+data-normal="0.9155021223458567m 0.10709464204948141m 0.38779711399715916m"
+data-visibility-attribute="visible"
+data-sensor="1" onclick="highlightSensor(1)">
+<div class="hotspot-dot"></div>
+<div class="HotspotAnnotation">Ulnar n. · S2</div>
+</button>
 
- <button class="Hotspot" slot="hotspot-7"
- data-position="-0.46174915471035105m -2.1026618079185706m 0.4931029251118565m"
- data-normal="0.9974854375164477m 0.0612158211055831m -0.03571309548317342m"
- data-visibility-attribute="visible"
- data-sensor="5" onclick="highlightSensor(5)">
- <div class="hotspot-dot"></div>
- <div class="HotspotAnnotation">Elbow · S6</div>
- </button>
 
- <div class="progress-bar hide" slot="progress-bar">
- <div class="update-bar"></div>
- </div>
- <button slot="ar-button" id="ar-button">View in AR</button>
- <div id="ar-prompt"><img src="https://modelviewer.dev/shared-assets/icons/hand.png"></div>
- </model-viewer>
- </div>
+<button class="Hotspot" slot="hotspot-3"
+data-position="-0.6291996777474168m -1.135369329236927m 0.4683082277890259m"
+data-normal="0.9710872044370789m 0.23502032610078963m -0.041893766816287335m"
+data-visibility-attribute="visible"
+data-sensor="2" onclick="highlightSensor(2)">
+<div class="hotspot-dot"></div>
+<div class="HotspotAnnotation">Median n. · S3</div>
+</button>
 
- <div class="right-panel">
 
- <div class="sensor-list">
- <div class="sensor-row" data-sensor="0" onclick="highlightSensor(0)">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Palm</div><div class="sensor-sublabel">Sensor 1</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-0">—</div><div class="sensor-unit" id="unit-0"></div></div>
- </div>
- <div class="sensor-row" data-sensor="1" onclick="highlightSensor(1)">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 2</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-1">—</div><div class="sensor-unit" id="unit-1"></div></div>
- </div>
- <div class="sensor-row" data-sensor="2" onclick="highlightSensor(2)">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Median nerve</div><div class="sensor-sublabel">Sensor 3</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-2">—</div><div class="sensor-unit" id="unit-2"></div></div>
- </div>
- <div class="sensor-row" data-sensor="3" onclick="highlightSensor(3)">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Radial nerve</div><div class="sensor-sublabel">Sensor 4</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-3">—</div><div class="sensor-unit" id="unit-3"></div></div>
- </div>
- <div class="sensor-row" data-sensor="4" onclick="highlightSensor(4)">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 5</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-4">—</div><div class="sensor-unit" id="unit-4"></div></div>
- </div>
- <div class="sensor-row" data-sensor="5" onclick="highlightSensor(5)">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Elbow</div><div class="sensor-sublabel">Sensor 6</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-5">—</div><div class="sensor-unit" id="unit-5"></div></div>
- </div>
- </div>
+<button class="Hotspot" slot="hotspot-5"
+data-position="-1.1208746614563028m -1.267461999523452m 0.4805872188318885m"
+data-normal="-0.999736852566426m 0.014744562933780531m -0.017573374305125688m"
+data-visibility-attribute="visible"
+data-sensor="3" onclick="highlightSensor(3)">
+<div class="hotspot-dot"></div>
+<div class="HotspotAnnotation">Radial n. · S4</div>
+</button>
 
- <div class="stats-card">
- <div class="stats-title">Session stats</div>
- <div class="stats-grid">
- <div class="stat-cell">
- <div class="sc-label">Average</div>
- <div class="sc-value placeholder" id="stat-avg">—</div>
- </div>
- <div class="stat-cell">
- <div class="sc-label">High</div>
- <div class="sc-value placeholder" id="stat-max">—</div>
- </div>
- <div class="stat-cell">
- <div class="sc-label">Low</div>
- <div class="sc-value placeholder" id="stat-min">—</div>
- </div>
- </div>
- <div class="stats-divider"></div>
- <div class="meta-row">
- <div class="meta-item">
- <div class="mt-label">Last update</div>
- <div class="mt-value" id="stat-time">—</div>
- </div>
- <div class="meta-item" style="text-align:right;">
 
- </div>
- </div>
- </div>
+<button class="Hotspot" slot="hotspot-6"
+data-position="-0.5300969363344729m -1.6467561604892647m 0.6216830608551476m"
+data-normal="0.9058887278678288m 0.21533448597419708m 0.3646870876137994m"
+data-visibility-attribute="visible"
+data-sensor="4" onclick="highlightSensor(4)">
+<div class="hotspot-dot"></div>
+<div class="HotspotAnnotation">Ulnar n. · S5</div>
+</button>
 
- <button id="connect-btn">
- <span id="btn-label">Connect to ForearmSense</span>
- <span class="btn-arrow">→</span>
- </button>
 
- </div>
+<button class="Hotspot" slot="hotspot-7"
+data-position="-0.46174915471035105m -2.1026618079185706m 0.4931029251118565m"
+data-normal="0.9974854375164477m 0.0612158211055831m -0.03571309548317342m"
+data-visibility-attribute="visible"
+data-sensor="5" onclick="highlightSensor(5)">
+<div class="hotspot-dot"></div>
+<div class="HotspotAnnotation">Elbow · S6</div>
+</button>
+
+
+<div class="progress-bar hide" slot="progress-bar">
+<div class="update-bar"></div>
 </div>
+<button slot="ar-button" id="ar-button">View in AR</button>
+<div id="ar-prompt"><img src="https://modelviewer.dev/shared-assets/icons/hand.png"></div>
+</model-viewer>
+</div>
+
+
+<div class="right-panel">
+
+
+<div class="sensor-list">
+<div class="sensor-row" data-sensor="0" onclick="highlightSensor(0)">
+<div class="swatch"></div>
+<div class="sensor-info"><div class="sensor-name">Palm</div><div class="sensor-sublabel">Sensor 1</div></div>
+<div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-0">—</div><div class="sensor-unit" id="unit-0"></div></div>
+</div>
+<div class="sensor-row" data-sensor="1" onclick="highlightSensor(1)">
+<div class="swatch"></div>
+<div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 2</div></div>
+<div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-1">—</div><div class="sensor-unit" id="unit-1"></div></div>
+</div>
+<div class="sensor-row" data-sensor="2" onclick="highlightSensor(2)">
+<div class="swatch"></div>
+<div class="sensor-info"><div class="sensor-name">Median nerve</div><div class="sensor-sublabel">Sensor 3</div></div>
+<div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-2">—</div><div class="sensor-unit" id="unit-2"></div></div>
+</div>
+<div class="sensor-row" data-sensor="3" onclick="highlightSensor(3)">
+<div class="swatch"></div>
+<div class="sensor-info"><div class="sensor-name">Radial nerve</div><div class="sensor-sublabel">Sensor 4</div></div>
+<div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-3">—</div><div class="sensor-unit" id="unit-3"></div></div>
+</div>
+<div class="sensor-row" data-sensor="4" onclick="highlightSensor(4)">
+<div class="swatch"></div>
+<div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 5</div></div>
+<div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-4">—</div><div class="sensor-unit" id="unit-4"></div></div>
+</div>
+<div class="sensor-row" data-sensor="5" onclick="highlightSensor(5)">
+<div class="swatch"></div>
+<div class="sensor-info"><div class="sensor-name">Elbow</div><div class="sensor-sublabel">Sensor 6</div></div>
+<div class="sensor-temp-col"><div class="sensor-temp placeholder" id="temp-5">—</div><div class="sensor-unit" id="unit-5"></div></div>
+</div>
+</div>
+
+
+<div class="stats-card">
+<div class="stats-title">Session stats</div>
+<div class="stats-grid">
+<div class="stat-cell">
+<div class="sc-label">Average</div>
+<div class="sc-value placeholder" id="stat-avg">—</div>
+</div>
+<div class="stat-cell">
+<div class="sc-label">High</div>
+<div class="sc-value placeholder" id="stat-max">—</div>
+</div>
+<div class="stat-cell">
+<div class="sc-label">Low</div>
+<div class="sc-value placeholder" id="stat-min">—</div>
+</div>
+</div>
+<div class="stats-divider"></div>
+<div class="meta-row">
+<div class="meta-item">
+<div class="mt-label">Last update</div>
+<div class="mt-value" id="stat-time">—</div>
+</div>
+<div class="meta-item" style="text-align:right;">
+
+
+</div>
+</div>
+</div>
+
+
+<button id="connect-btn">
+<span id="btn-label">Connect to ForearmSense</span>
+<span class="btn-arrow">→</span>
+</button>
+
+
+</div>
+</div>
+
 
 <!-- ---- Realtime temperature chart ---- -->
 <div class="chart-card">
- <div class="chart-head">
- <div class="chart-title">Temperature Line Graph</div>
- <div class="unit-toggle" id="unit-toggle">
- <button class="unit-opt active" data-unit="C">°C</button>
- <button class="unit-opt" data-unit="F">°F</button>
- </div>
- </div>
- <div class="chart-wrap">
- <canvas id="temp-chart"></canvas>
- </div>
+<div class="chart-head">
+<div class="chart-title">Temperature Line Graph</div>
+<div class="unit-toggle" id="unit-toggle">
+<button class="unit-opt active" data-unit="C">°C</button>
+<button class="unit-opt" data-unit="F">°F</button>
+</div>
+</div>
+<div class="chart-wrap">
+<canvas id="temp-chart"></canvas>
+</div>
 </div>
 
+
 </main>
+
 
 <!-- ============================================================
-     HEATER PAGE
-     ============================================================ -->
+    HEATER PAGE
+    ============================================================ -->
 <main id="page-heater" hidden>
 
- <div class="page-body">
 
- <!-- Heating element visual: serpentine pad + temperature-driven glow -->
- <div class="viewer-card heater-visual is-standby" id="heater-visual">
- <div class="heater-state-label">
- <span class="dot" id="heater-dot"></span>
- <span id="heater-state-text">Standby</span>
- </div>
+<div class="page-body">
 
- <div class="heater-glow" id="heater-glow"></div>
 
- <div class="heater-readout">
- <div class="hr-temp placeholder" id="heater-temp">—<span class="hr-unit">°C</span></div>
- <div class="hr-sub" id="heater-temp-f">Element temperature</div>
- </div>
- </div>
+<!-- Heating element visual: serpentine pad + temperature-driven glow -->
+<div class="viewer-card heater-visual is-standby" id="heater-visual">
+<div class="heater-state-label">
+<span class="dot" id="heater-dot"></span>
+<span id="heater-state-text">Standby</span>
+</div>
 
- <!-- Right column: sensors + controls -->
- <div class="right-panel">
 
- <div class="sensor-list">
- <div class="sensor-row" data-sensor="0" style="cursor:default;">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Palm</div><div class="sensor-sublabel">Sensor 1</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-0">—</div><div class="sensor-unit" id="hunit-0"></div></div>
- </div>
- <div class="sensor-row" data-sensor="1" style="cursor:default;">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 2</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-1">—</div><div class="sensor-unit" id="hunit-1"></div></div>
- </div>
- <div class="sensor-row" data-sensor="2" style="cursor:default;">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Median nerve</div><div class="sensor-sublabel">Sensor 3</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-2">—</div><div class="sensor-unit" id="hunit-2"></div></div>
- </div>
- <div class="sensor-row" data-sensor="4" style="cursor:default;">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Ulnar nerve</div><div class="sensor-sublabel">Sensor 5</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-4">—</div><div class="sensor-unit" id="hunit-4"></div></div>
- </div>
- <div class="sensor-row" data-sensor="5" style="cursor:default;">
- <div class="swatch"></div>
- <div class="sensor-info"><div class="sensor-name">Elbow</div><div class="sensor-sublabel">Sensor 6</div></div>
- <div class="sensor-temp-col"><div class="sensor-temp placeholder" id="htemp-5">—</div><div class="sensor-unit" id="hunit-5"></div></div>
- </div>
- </div>
+<div class="heater-glow" id="heater-glow"></div>
 
- <div class="stats-card">
- <div class="stats-title">Target temperature</div>
- <div class="target-stepper">
- <button class="step-btn" id="target-down" aria-label="Lower target">−</button>
- <div class="target-val"><span id="target-val">33</span><span class="sc-unit"> °C</span></div>
- <button class="step-btn" id="target-up" aria-label="Raise target">+</button>
- </div>
- <button id="heater-toggle">
- <span id="heater-toggle-label">Start heating</span>
- <span class="btn-arrow">→</span>
- </button>
- </div>
 
- </div>
- </div>
+<div class="heater-readout">
+<div class="hr-temp placeholder" id="heater-temp">—<span class="hr-unit">°C</span></div>
+<div class="hr-sub" id="heater-temp-f">Element temperature</div>
+</div>
+</div>
+
+
+<!-- Right column: sensors + controls -->
+<div class="right-panel">
+
+
+<div class="stats-card">
+<div class="stats-title">Target temperature</div>
+<div class="target-stepper">
+<button class="step-btn" id="target-down" aria-label="Lower target">−</button>
+<div class="target-val"><span id="target-val">33</span><span class="sc-unit"> °C</span></div>
+<button class="step-btn" id="target-up" aria-label="Raise target">+</button>
+</div>
+<button id="heater-toggle">
+<span id="heater-toggle-label">Start heating</span>
+<span class="btn-arrow">→</span>
+</button>
+</div>
+
+
+</div>
+</div>
+
 
 </main>
+
 
 <script>
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+
 
 let bleDevice = null;
 let isConnected = false;
@@ -807,402 +864,452 @@ let temperatures = Array(6).fill(null);
 let sessionMax = null;
 let sessionMin = null;
 
+
 const connectBtn = document.getElementById('connect-btn');
 const btnLabel = document.getElementById('btn-label');
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const compatWarn = document.getElementById('compat-warn');
 
+
 if (!navigator.bluetooth) {
- compatWarn.style.display = 'block';
- connectBtn.disabled = true;
+compatWarn.style.display = 'block';
+connectBtn.disabled = true;
 }
+
 
 connectBtn.addEventListener('click', async () => {
- if (isConnected) { disconnect(); return; }
- try {
- setStatus('connecting');
- bleDevice = await navigator.bluetooth.requestDevice({
- filters: [{ name: 'ForearmSense' }],
- optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
- });
- bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
- const server = await bleDevice.gatt.connect();
- const service = await server.getPrimaryService(SERVICE_UUID);
- const char = await service.getCharacteristic(CHARACTERISTIC_UUID);
- await char.startNotifications();
- char.addEventListener('characteristicvaluechanged', onDataReceived);
- isConnected = true;
- setStatus('connected');
- btnLabel.textContent = 'Disconnect';
- resetChart(); // fresh trace for each new session
- } catch (err) {
- console.error('BLE error:', err);
- setStatus('error');
- setTimeout(() => setStatus('idle'), 3000);
- }
+if (isConnected) { disconnect(); return; }
+try {
+setStatus('connecting');
+bleDevice = await navigator.bluetooth.requestDevice({
+filters: [{ name: 'ForearmSense' }],
+optionalServices: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
+});
+bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+const server = await bleDevice.gatt.connect();
+const service = await server.getPrimaryService(SERVICE_UUID);
+const char = await service.getCharacteristic(CHARACTERISTIC_UUID);
+await char.startNotifications();
+char.addEventListener('characteristicvaluechanged', onDataReceived);
+isConnected = true;
+setStatus('connected');
+btnLabel.textContent = 'Disconnect';
+resetChart(); // fresh trace for each new session
+} catch (err) {
+console.error('BLE error:', err);
+setStatus('error');
+setTimeout(() => setStatus('idle'), 3000);
+}
 });
 
+
 function disconnect() {
- if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+if (bleDevice && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
 }
+
 
 function onDisconnected() {
- isConnected = false;
- setStatus('idle');
- btnLabel.textContent = 'Connect to ForearmSense';
- temperatures = Array(6).fill(null);
- updateAllSensors();
- resetStats();
- // Chart history is kept after disconnect so the last session can be reviewed.
+isConnected = false;
+setStatus('idle');
+btnLabel.textContent = 'Connect to ForearmSense';
+temperatures = Array(6).fill(null);
+updateAllSensors();
+resetStats();
+// Chart history is kept after disconnect so the last session can be reviewed.
 }
+
 
 function onDataReceived(event) {
- // ESP32 sends JSON: {"t":[t1,t2,t3,t4,t5,t6],"robust":avg,"ts":millis}
- const decoder = new TextDecoder('utf-8');
- const jsonStr = decoder.decode(event.target.value);
+// ESP32 sends JSON: {"t":[t1,t2,t3,t4,t5,t6],"robust":avg,"ts":millis}
+const decoder = new TextDecoder('utf-8');
+const jsonStr = decoder.decode(event.target.value);
 
- let parsed;
- try {
- parsed = JSON.parse(jsonStr);
- } catch (e) {
- console.error('JSON parse error:', e, jsonStr);
- return;
- }
 
- const t = parsed.t;
- for (let i = 0; i < 6; i++) {
- temperatures[i] = (t[i] === null || t[i] === undefined || isNaN(t[i])) ? null : t[i];
- }
-
- updateAllSensors();
- updateStats(parsed.robust);
- pushChartData(parsed.robust); // feed the realtime line graph
-
- const now = new Date();
- document.getElementById('stat-time').textContent =
- now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
- setStatus('reading');
- clearTimeout(window._rt);
- window._rt = setTimeout(() => setStatus('connected'), 700);
+let parsed;
+try {
+parsed = JSON.parse(jsonStr);
+} catch (e) {
+console.error('JSON parse error:', e, jsonStr);
+return;
 }
+
+
+const t = parsed.t;
+for (let i = 0; i < 6; i++) {
+temperatures[i] = (t[i] === null || t[i] === undefined || isNaN(t[i])) ? null : t[i];
+}
+
+
+updateAllSensors();
+updateStats(parsed.robust);
+pushChartData(parsed.robust); // feed the realtime line graph
+
+
+const now = new Date();
+document.getElementById('stat-time').textContent =
+now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+
+setStatus('reading');
+clearTimeout(window._rt);
+window._rt = setTimeout(() => setStatus('connected'), 700);
+}
+
 
 function classify(t) {
- if (t === null) return '-';
- if (t > 37.5) return 'hot';
- if (t > 36.0 || t < 32.0) return 'warn';
- return 'good';
+if (t === null) return '-';
+if (t > 37.5) return 'hot';
+if (t > 36.0 || t < 32.0) return 'warn';
+return 'good';
 }
+
 
 function celsiusToFahrenheit(c) {
- if (c === null) return null;
- return (c * 9/5) + 32;
+if (c === null) return null;
+return (c * 9/5) + 32;
 }
+
 
 function updateAllSensors() {
- for (let i = 0; i < 6; i++) {
- const t = temperatures[i];
- const cls = classify(t);
- const f = celsiusToFahrenheit(t);
- // Update both the Sensing page rows (temp-N) and the Heating page rows (htemp-N).
- ['temp-', 'htemp-'].forEach(prefix => {
- const el = document.getElementById(prefix + i);
- const uel = document.getElementById((prefix === 'temp-' ? 'unit-' : 'hunit-') + i);
- if (!el) return;
- el.className = 'sensor-temp' + (t === null ? ' placeholder' : cls ? ' ' + cls : '');
- if (t === null) {
- el.textContent = '—';
- if (uel) uel.textContent = '';
- } else {
- el.textContent = t + ' / ' + (f === null ? '—' : f.toFixed(2));
- if (uel) uel.textContent = '°C / °F';
- }
- });
- }
+for (let i = 0; i < 6; i++) {
+const t = temperatures[i];
+const cls = classify(t);
+const f = celsiusToFahrenheit(t);
+// Update the Sensing page rows (temp-N).
+const el = document.getElementById('temp-' + i);
+const uel = document.getElementById('unit-' + i);
+if (el) {
+el.className = 'sensor-temp' + (t === null ? ' placeholder' : cls ? ' ' + cls : '');
+if (t === null) {
+el.textContent = '—';
+if (uel) uel.textContent = '';
+} else {
+el.textContent = t + ' / ' + (f === null ? '—' : f.toFixed(2));
+if (uel) uel.textContent = '°C / °F';
 }
+}
+}
+// Keep the heating-page readout (weighted average of the 5 sensors) in sync.
+if (typeof window.updateHeaterFromSensors === 'function') window.updateHeaterFromSensors();
+}
+
 
 function updateStats(robustAvg) {
- const valid = temperatures.filter(t => t !== null);
- if (valid.length === 0) { resetStats(); return; }
+const valid = temperatures.filter(t => t !== null);
+if (valid.length === 0) { resetStats(); return; }
 
- // Use the Huber robust average from the ESP32 if available, else fallback
- const avg = (robustAvg !== null && robustAvg !== undefined && !isNaN(robustAvg))
- ? robustAvg
- : valid.reduce((a, b) => a + b, 0) / valid.length;
 
- const max = Math.max(...valid);
- const min = Math.min(...valid);
+// Use the Huber robust average from the ESP32 if available, else fallback
+const avg = (robustAvg !== null && robustAvg !== undefined && !isNaN(robustAvg))
+? robustAvg
+: valid.reduce((a, b) => a + b, 0) / valid.length;
 
- if (sessionMax === null || max > sessionMax) sessionMax = max;
- if (sessionMin === null || min < sessionMin) sessionMin = min;
 
- const avgEl = document.getElementById('stat-avg');
- const maxEl = document.getElementById('stat-max');
- const minEl = document.getElementById('stat-min');
+const max = Math.max(...valid);
+const min = Math.min(...valid);
 
- avgEl.innerHTML = avg.toFixed(1) + '<span class="sc-unit"> °C</span>';
- maxEl.innerHTML = sessionMax.toFixed(1) + '<span class="sc-unit"> °C</span>';
- minEl.innerHTML = sessionMin.toFixed(1) + '<span class="sc-unit"> °C</span>';
- avgEl.className = 'sc-value';
- maxEl.className = 'sc-value';
- minEl.className = 'sc-value';
+
+if (sessionMax === null || max > sessionMax) sessionMax = max;
+if (sessionMin === null || min < sessionMin) sessionMin = min;
+
+
+const avgEl = document.getElementById('stat-avg');
+const maxEl = document.getElementById('stat-max');
+const minEl = document.getElementById('stat-min');
+
+
+avgEl.innerHTML = avg.toFixed(1) + '<span class="sc-unit"> °C</span>';
+maxEl.innerHTML = sessionMax.toFixed(1) + '<span class="sc-unit"> °C</span>';
+minEl.innerHTML = sessionMin.toFixed(1) + '<span class="sc-unit"> °C</span>';
+avgEl.className = 'sc-value';
+maxEl.className = 'sc-value';
+minEl.className = 'sc-value';
 }
+
 
 function resetStats() {
- ['stat-avg', 'stat-max', 'stat-min'].forEach(id => {
- const el = document.getElementById(id);
- el.textContent = '—';
- el.className = 'sc-value placeholder';
- });
- document.getElementById('stat-time').textContent = '—';
- sessionMax = null;
- sessionMin = null;
+['stat-avg', 'stat-max', 'stat-min'].forEach(id => {
+const el = document.getElementById(id);
+el.textContent = '—';
+el.className = 'sc-value placeholder';
+});
+document.getElementById('stat-time').textContent = '—';
+sessionMax = null;
+sessionMin = null;
 }
+
 
 function highlightSensor(index) {
- document.querySelectorAll('#page-monitor .sensor-row').forEach((r, i) => {
- r.classList.toggle('active', i === index);
- });
- document.querySelectorAll('.Hotspot').forEach(h => {
- h.classList.toggle('active', parseInt(h.dataset.sensor) === index);
- });
+document.querySelectorAll('#page-monitor .sensor-row').forEach((r, i) => {
+r.classList.toggle('active', i === index);
+});
+document.querySelectorAll('.Hotspot').forEach(h => {
+h.classList.toggle('active', parseInt(h.dataset.sensor) === index);
+});
 }
+
 
 function setStatus(state) {
- const map = {
- idle: { label: 'Disconnected', dot: '' },
- connecting: { label: 'Connecting…', dot: 'pulse' },
- connected: { label: 'Connected', dot: 'live' },
- reading: { label: 'Receiving', dot: 'pulse' },
- error: { label: 'Error', dot: 'err' },
- };
- const s = map[state] || map.idle;
- statusText.textContent = s.label;
- statusDot.className = 'dot ' + s.dot;
+const map = {
+idle: { label: 'Disconnected', dot: '' },
+connecting: { label: 'Connecting…', dot: 'pulse' },
+connected: { label: 'Connected', dot: 'live' },
+reading: { label: 'Receiving', dot: 'pulse' },
+error: { label: 'Error', dot: 'err' },
+};
+const s = map[state] || map.idle;
+statusText.textContent = s.label;
+statusDot.className = 'dot ' + s.dot;
 }
 
+
 /* ============================================================
- REALTIME CHART (Chart.js)
- ============================================================ */
+REALTIME CHART (Chart.js)
+============================================================ */
+
 
 // Colors mirror the --c1..--c6 CSS vars; the holistic line is white.
 const SENSOR_COLORS = ['#7ec8e3', '#b5a4f5', '#f5a4c0', '#a4d4a4', '#f5c97a', '#f5a07a'];
 const SENSOR_LABELS = ['Palm', 'Ulnar n.', 'Median n.', 'Radial n.', 'Ulnar n.', 'Elbow'];
 const ROBUST_COLOR = '#ffffff';
 
+
 let currentUnit = 'C'; // 'C' or 'F'
 let tempChart = null;
 
+
 // All history is stored in Celsius; conversion happens at render time.
 const chartHistory = {
- labels: [],
- series: [[], [], [], [], [], []],
- robust: []
+labels: [],
+series: [[], [], [], [], [], []],
+robust: []
 };
 
+
 function initChart() {
- const ctx = document.getElementById('temp-chart').getContext('2d');
+const ctx = document.getElementById('temp-chart').getContext('2d');
 
- const datasets = SENSOR_COLORS.map((color, i) => ({
- label: SENSOR_LABELS[i],
- data: [],
- borderColor: color,
- backgroundColor: color,
- borderWidth: 1.5,
- pointRadius: 0,
- pointHoverRadius: 3,
- tension: 0.3,
- spanGaps: true
- }));
 
- datasets.push({
- label: 'Robust avg',
- data: [],
- borderColor: ROBUST_COLOR,
- backgroundColor: ROBUST_COLOR,
- borderWidth: 2.5,
- pointRadius: 0,
- pointHoverRadius: 3,
- tension: 0.3,
- spanGaps: true
- });
+const datasets = SENSOR_COLORS.map((color, i) => ({
+label: SENSOR_LABELS[i],
+data: [],
+borderColor: color,
+backgroundColor: color,
+borderWidth: 1.5,
+pointRadius: 0,
+pointHoverRadius: 3,
+tension: 0.3,
+spanGaps: true
+}));
 
- tempChart = new Chart(ctx, {
- type: 'line',
- data: { labels: [], datasets },
- options: {
- responsive: true,
- maintainAspectRatio: false,
- animation: false, // smoother for streaming data
- interaction: { mode: 'index', intersect: false },
- plugins: {
- legend: {
- position: 'bottom',
- labels: {
- color: 'rgba(255,255,255,0.55)',
- usePointStyle: true,
- pointStyle: 'circle',
- boxWidth: 6,
- boxHeight: 6,
- padding: 14,
- font: { size: 11, family: "-apple-system, 'Helvetica Neue', Arial, sans-serif" }
- }
- },
- tooltip: {
- backgroundColor: 'rgba(28,28,30,0.95)',
- borderColor: 'rgba(255,255,255,0.14)',
- borderWidth: 0.5,
- titleColor: '#f2f2f7',
- bodyColor: 'rgba(255,255,255,0.8)',
- padding: 10,
- cornerRadius: 8,
- callbacks: {
- label: (item) => {
- const v = item.parsed.y;
- return ` ${item.dataset.label}: ${v == null ? '—' : v.toFixed(1)} °${currentUnit}`;
- }
- }
- }
- },
- scales: {
- x: {
- grid: { color: 'rgba(255,255,255,0.05)' },
- ticks: {
- color: 'rgba(255,255,255,0.38)',
- font: { size: 10 },
- maxRotation: 0,
- autoSkip: true,
- maxTicksLimit: 10
- }
- },
- y: {
- grid: { color: 'rgba(255,255,255,0.05)' },
- ticks: { color: 'rgba(255,255,255,0.38)', font: { size: 10 } },
- title: {
- display: true,
- text: 'Temperature (°C)',
- color: 'rgba(255,255,255,0.38)',
- font: { size: 10 }
- }
- }
- }
- }
- });
+
+datasets.push({
+label: 'Robust avg',
+data: [],
+borderColor: ROBUST_COLOR,
+backgroundColor: ROBUST_COLOR,
+borderWidth: 2.5,
+pointRadius: 0,
+pointHoverRadius: 3,
+tension: 0.3,
+spanGaps: true
+});
+
+
+tempChart = new Chart(ctx, {
+type: 'line',
+data: { labels: [], datasets },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+animation: false, // smoother for streaming data
+interaction: { mode: 'index', intersect: false },
+plugins: {
+legend: {
+position: 'bottom',
+labels: {
+color: 'rgba(255,255,255,0.55)',
+usePointStyle: true,
+pointStyle: 'circle',
+boxWidth: 6,
+boxHeight: 6,
+padding: 14,
+font: { size: 11, family: "-apple-system, 'Helvetica Neue', Arial, sans-serif" }
 }
+},
+tooltip: {
+backgroundColor: 'rgba(28,28,30,0.95)',
+borderColor: 'rgba(255,255,255,0.14)',
+borderWidth: 0.5,
+titleColor: '#f2f2f7',
+bodyColor: 'rgba(255,255,255,0.8)',
+padding: 10,
+cornerRadius: 8,
+callbacks: {
+label: (item) => {
+const v = item.parsed.y;
+return ` ${item.dataset.label}: ${v == null ? '—' : v.toFixed(1)} °${currentUnit}`;
+}
+}
+}
+},
+scales: {
+x: {
+grid: { color: 'rgba(255,255,255,0.05)' },
+ticks: {
+color: 'rgba(255,255,255,0.38)',
+font: { size: 10 },
+maxRotation: 0,
+autoSkip: true,
+maxTicksLimit: 10
+}
+},
+y: {
+grid: { color: 'rgba(255,255,255,0.05)' },
+ticks: { color: 'rgba(255,255,255,0.38)', font: { size: 10 } },
+title: {
+display: true,
+text: 'Temperature (°C)',
+color: 'rgba(255,255,255,0.38)',
+font: { size: 10 }
+}
+}
+}
+}
+});
+}
+
 
 function convert(c) {
- if (c === null || c === undefined || isNaN(c)) return null;
- return currentUnit === 'F' ? (c * 9 / 5) + 32 : c;
+if (c === null || c === undefined || isNaN(c)) return null;
+return currentUnit === 'F' ? (c * 9 / 5) + 32 : c;
 }
+
 
 function renderChart() {
- if (!tempChart) return;
+if (!tempChart) return;
 
- tempChart.data.labels = chartHistory.labels;
- for (let i = 0; i < 6; i++) {
- tempChart.data.datasets[i].data = chartHistory.series[i].map(convert);
- }
- tempChart.data.datasets[6].data = chartHistory.robust.map(convert);
 
- tempChart.options.scales.y.title.text = 'Temperature (°' + currentUnit + ')';
- // Stable clinical window so the trace doesn't jump around.
- if (currentUnit === 'C') {
- tempChart.options.scales.y.suggestedMin = 28;
- tempChart.options.scales.y.suggestedMax = 40;
- } else {
- tempChart.options.scales.y.suggestedMin = 82;
- tempChart.options.scales.y.suggestedMax = 104;
- }
-
- tempChart.update('none');
+tempChart.data.labels = chartHistory.labels;
+for (let i = 0; i < 6; i++) {
+tempChart.data.datasets[i].data = chartHistory.series[i].map(convert);
 }
+tempChart.data.datasets[6].data = chartHistory.robust.map(convert);
+
+
+tempChart.options.scales.y.title.text = 'Temperature (°' + currentUnit + ')';
+// Stable clinical window so the trace doesn't jump around.
+if (currentUnit === 'C') {
+tempChart.options.scales.y.suggestedMin = 28;
+tempChart.options.scales.y.suggestedMax = 40;
+} else {
+tempChart.options.scales.y.suggestedMin = 82;
+tempChart.options.scales.y.suggestedMax = 104;
+}
+
+
+tempChart.update('none');
+}
+
 
 function pushChartData(robustAvg) {
- const now = new Date();
- const label = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const now = new Date();
+const label = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
- chartHistory.labels.push(label);
- for (let i = 0; i < 6; i++) chartHistory.series[i].push(temperatures[i]);
 
- const valid = temperatures.filter(t => t !== null);
- const robust = (robustAvg !== null && robustAvg !== undefined && !isNaN(robustAvg))
- ? robustAvg
- : (valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null);
- chartHistory.robust.push(robust);
+chartHistory.labels.push(label);
+for (let i = 0; i < 6; i++) chartHistory.series[i].push(temperatures[i]);
 
- renderChart();
+
+const valid = temperatures.filter(t => t !== null);
+const robust = (robustAvg !== null && robustAvg !== undefined && !isNaN(robustAvg))
+? robustAvg
+: (valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null);
+chartHistory.robust.push(robust);
+
+
+renderChart();
 }
+
 
 function resetChart() {
- chartHistory.labels = [];
- chartHistory.series = [[], [], [], [], [], []];
- chartHistory.robust = [];
- renderChart();
+chartHistory.labels = [];
+chartHistory.series = [[], [], [], [], [], []];
+chartHistory.robust = [];
+renderChart();
 }
+
 
 // C/F toggle
 document.getElementById('unit-toggle').addEventListener('click', (e) => {
- const btn = e.target.closest('.unit-opt');
- if (!btn) return;
- currentUnit = btn.dataset.unit;
- document.querySelectorAll('.unit-opt').forEach(b => b.classList.toggle('active', b === btn));
- renderChart();
+const btn = e.target.closest('.unit-opt');
+if (!btn) return;
+currentUnit = btn.dataset.unit;
+document.querySelectorAll('.unit-opt').forEach(b => b.classList.toggle('active', b === btn));
+renderChart();
 });
+
 
 initChart();
 
+
 </script>
+
 
 <script>
 /* ============================================================
-   HEATER PAGE — page switching + heater UI
-   The heating element's radial glow is driven by the live
-   element temperature: orange when cool, deepening to red as
-   it climbs toward the safety cutoff.
-   ============================================================ */
+  HEATER PAGE — page switching + heater UI
+  The heating element's radial glow is driven by the live
+  element temperature: orange when cool, deepening to red as
+  it climbs toward the safety cutoff.
+  ============================================================ */
+
 
 // ---- Page switching ----
 const navTabs = document.querySelectorAll('.nav-tab');
 const pageMonitor = document.getElementById('page-monitor');
 const pageHeater = document.getElementById('page-heater');
 
+
 function showPage(name) {
- const heater = name === 'heater';
- pageMonitor.hidden = heater;
- pageHeater.hidden = !heater;
- navTabs.forEach(t => t.classList.toggle('active', t.dataset.page === name));
- // Chart.js needs a nudge after the monitor page is re-shown while hidden.
- if (!heater) { try { if (tempChart) tempChart.resize(); } catch (e) {} }
+const heater = name === 'heater';
+pageMonitor.hidden = heater;
+pageHeater.hidden = !heater;
+navTabs.forEach(t => t.classList.toggle('active', t.dataset.page === name));
+// Chart.js needs a nudge after the monitor page is re-shown while hidden.
+if (!heater) { try { if (tempChart) tempChart.resize(); } catch (e) {} }
 }
 navTabs.forEach(t => t.addEventListener('click', () => showPage(t.dataset.page)));
 
+
 // ---- Build the serpentine heating trace to fit the pad silhouette ----
 (function () {
- const trace = document.getElementById('coil-trace');
- if (!trace) return;
- const RIGHT = 88, TOP = 30, BOTTOM = 228, PITCH = 6.2;
- // Left edge steps in near the top to follow the large rounded corner.
- function leftBound(y) {
- if (y < 88) {
- let t = (y - TOP) / (88 - TOP);
- t = Math.max(0, Math.min(1, t));
- return 40 - (40 - 14) * t;
- }
- return 14;
- }
- let d = '', dir = 1, first = true;
- for (let y = TOP; y <= BOTTOM; y += PITCH) {
- const lx = leftBound(y);
- const x0 = dir === 1 ? lx : RIGHT;
- const x1 = dir === 1 ? RIGHT : lx;
- d += (first ? 'M ' : 'L ') + x0.toFixed(1) + ' ' + y.toFixed(1) + ' ';
- d += 'L ' + x1.toFixed(1) + ' ' + y.toFixed(1) + ' ';
- first = false;
- dir *= -1;
- }
- trace.setAttribute('d', d);
+const trace = document.getElementById('coil-trace');
+if (!trace) return;
+const RIGHT = 88, TOP = 30, BOTTOM = 228, PITCH = 6.2;
+// Left edge steps in near the top to follow the large rounded corner.
+function leftBound(y) {
+if (y < 88) {
+let t = (y - TOP) / (88 - TOP);
+t = Math.max(0, Math.min(1, t));
+return 40 - (40 - 14) * t;
+}
+return 14;
+}
+let d = '', dir = 1, first = true;
+for (let y = TOP; y <= BOTTOM; y += PITCH) {
+const lx = leftBound(y);
+const x0 = dir === 1 ? lx : RIGHT;
+const x1 = dir === 1 ? RIGHT : lx;
+d += (first ? 'M ' : 'L ') + x0.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+d += 'L ' + x1.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+first = false;
+dir *= -1;
+}
+trace.setAttribute('d', d);
 })();
+
 
 // ---- Heater state ----
 const T_MIN = 30, T_MAX = 40;      // target adjustable range (°C)
@@ -1210,20 +1317,26 @@ const SAFETY_CUTOFF = 45.0;        // hard over-temp limit (°C)
 const TARGET_BAND = 0.3;           // "at target" tolerance (°C)
 const AMBIENT = 30.5;              // resting element temp (°C)
 
-// Glow mapping range: GLOW_LO (orange, faint) -> GLOW_HI (red, intense)
-const GLOW_LO = AMBIENT;           // start of the orange->red ramp (°C)
-const GLOW_HI = SAFETY_CUTOFF;     // fully red at the cutoff (°C)
+
+// Glow mapping range: GLOW_LO (orange, faint) -> GLOW_HI (red, intense).
+// The big readout now shows the weighted forearm-sensor average, so the glow
+// ramps across the skin-temp band, not the element band. Tune these two if
+// your trace runs hotter/cooler than expected.
+const GLOW_LO = 28;                // faint orange around resting skin temp (°C)
+const GLOW_HI = 42;                // fully red near the top of the warm band (°C)
+
 
 const HEATER = {
- targetC: 33,
- tempC: null,
- guardCoilC: null,
- guardSkinC: null,
- state: 'standby',  // standby | heating | target | fault
- running: false,
- lastUpdate: null,
- timer: null
+targetC: 33,
+tempC: null,
+guardCoilC: null,
+guardSkinC: null,
+state: 'standby',  // standby | heating | target | fault
+running: false,
+lastUpdate: null,
+timer: null
 };
+
 
 const heaterVisual = document.getElementById('heater-visual');
 const heaterGlow = document.getElementById('heater-glow');
@@ -1237,164 +1350,240 @@ const targetValEl = document.getElementById('target-val');
 const targetUp = document.getElementById('target-up');
 const targetDown = document.getElementById('target-down');
 
+
 const STATE_TEXT = {
- standby: 'Standby',
- heating: 'Heating',
- target: 'At target',
- fault: 'Fault — over-temp'
+standby: 'Standby',
+heating: 'Heating',
+target: 'At target',
+fault: 'Fault — over-temp'
 };
 const STATE_DOT = { standby: '', heating: 'pulse', target: 'live', fault: 'err' };
 
+
+// ---- Weighted forearm average (drives the big readout + glow) ----
+// The heating view watches 5 of the 6 sites (Radial n. / index 3 is omitted,
+// same as the panel that used to be here). Weights are equal by default, so the
+// number is a true average of the field and matches what the sensors report.
+// Bump an entry if you ever want a site to count for more.
+const HEATER_SENSOR_IDX = [0, 1, 2, 4, 5];
+const HEATER_SENSOR_W = { 0: 1, 1: 1, 2: 1, 4: 1, 5: 1 };
+
+
+function weightedSkinAvg() {
+let sw = 0, sv = 0;
+for (const i of HEATER_SENSOR_IDX) {
+const t = temperatures[i];
+if (t === null || t === undefined || isNaN(t)) continue;
+const w = HEATER_SENSOR_W[i] ?? 1;
+sw += w;
+sv += w * t;
+}
+return sw > 0 ? sv / sw : null;
+}
+
+
+// Called whenever fresh sensor data lands. Real sensor data wins over the demo:
+// the readout under the diagram becomes the weighted average of the 5 sensors.
+window.updateHeaterFromSensors = function () {
+const avg = weightedSkinAvg();
+if (avg === null) {
+// No live data. If the demo isn't running, fall back to the placeholder.
+if (!HEATER.timer) {
+HEATER.tempC = null;
+if (HEATER.state !== 'fault') HEATER.state = 'standby';
+renderHeater();
+}
+return;
+}
+if (HEATER.timer) clearTimer();   // stop the demo tick once real data flows
+HEATER.tempC = avg;
+if (avg >= SAFETY_CUTOFF) {
+HEATER.running = false;
+HEATER.state = 'fault';
+} else if (HEATER.running) {
+HEATER.state = (avg >= HEATER.targetC - TARGET_BAND) ? 'target' : 'heating';
+} else if (HEATER.state !== 'fault') {
+HEATER.state = 'standby';
+}
+HEATER.lastUpdate = new Date();
+renderHeater();
+};
+
+
 function f1(c) { const f = celsiusToFahrenheit(c); return f === null ? '—' : f.toFixed(1); }
 
+
 function guardClass(t, warnAt, hotAt) {
- if (t === null) return '';
- if (t >= hotAt) return 'hot';
- if (t >= warnAt) return 'warn';
- return 'good';
+if (t === null) return '';
+if (t >= hotAt) return 'hot';
+if (t >= warnAt) return 'warn';
+return 'good';
 }
 
+
 function setGuardRow(valId, unitId, t, warnAt, hotAt) {
- const el = document.getElementById(valId);
- const uel = document.getElementById(unitId);
- if (!el) return;
- if (t === null) {
- el.className = 'sensor-temp placeholder';
- el.textContent = '—';
- uel.textContent = '';
- } else {
- el.className = 'sensor-temp ' + guardClass(t, warnAt, hotAt);
- el.textContent = t.toFixed(1) + ' / ' + f1(t);
- uel.textContent = '°C / °F';
- }
+const el = document.getElementById(valId);
+const uel = document.getElementById(unitId);
+if (!el) return;
+if (t === null) {
+el.className = 'sensor-temp placeholder';
+el.textContent = '—';
+uel.textContent = '';
+} else {
+el.className = 'sensor-temp ' + guardClass(t, warnAt, hotAt);
+el.textContent = t.toFixed(1) + ' / ' + f1(t);
+uel.textContent = '°C / °F';
 }
+}
+
 
 // Maps element temperature to a glow color (orange -> red) and intensity.
 function glowFor(tempC, state) {
- let f = (tempC - GLOW_LO) / (GLOW_HI - GLOW_LO);
- f = Math.max(0, Math.min(1, f));
- if (state === 'fault') f = 1;                 // faults pin to full red
- // orange (245,160,122) -> red (235,87,87)
- const r = Math.round(245 + (235 - 245) * f);
- const g = Math.round(160 + (87 - 160) * f);
- const b = Math.round(122 + (87 - 122) * f);
- const opacity = 0.30 + 0.55 * f;              // darker glow as it heats up
- return { rgb: r + ',' + g + ',' + b, opacity };
+let f = (tempC - GLOW_LO) / (GLOW_HI - GLOW_LO);
+f = Math.max(0, Math.min(1, f));
+if (state === 'fault') f = 1;                 // faults pin to full red
+// orange (245,160,122) -> red (235,87,87)
+const r = Math.round(245 + (235 - 245) * f);
+const g = Math.round(160 + (87 - 160) * f);
+const b = Math.round(122 + (87 - 122) * f);
+const opacity = 0.30 + 0.55 * f;              // darker glow as it heats up
+return { rgb: r + ',' + g + ',' + b, opacity };
 }
+
 
 function renderHeater() {
- // Visual state + label
- heaterVisual.className = 'viewer-card heater-visual is-' + HEATER.state;
- heaterDot.className = 'dot ' + STATE_DOT[HEATER.state];
- heaterStateText.textContent = STATE_TEXT[HEATER.state];
+// Visual state + label
+heaterVisual.className = 'viewer-card heater-visual is-' + HEATER.state;
+heaterDot.className = 'dot ' + STATE_DOT[HEATER.state];
+heaterStateText.textContent = STATE_TEXT[HEATER.state];
 
- // Temperature-driven glow behind the element
- if (HEATER.tempC === null) {
- heaterGlow.style.opacity = 0;
- } else {
- const g = glowFor(HEATER.tempC, HEATER.state);
- heaterGlow.style.background =
- 'radial-gradient(circle, rgba(' + g.rgb + ',0.85), rgba(' + g.rgb + ',0.32) 42%, transparent 70%)';
- heaterGlow.style.opacity = g.opacity;
- }
 
- // Big element readout
- if (HEATER.tempC === null) {
- heaterTempEl.className = 'hr-temp placeholder';
- heaterTempEl.innerHTML = '—<span class="hr-unit">°C</span>';
- heaterTempFEl.textContent = 'Element temperature';
- } else {
- heaterTempEl.className = 'hr-temp';
- heaterTempEl.innerHTML = HEATER.tempC.toFixed(1) + '<span class="hr-unit">°C</span>';
- heaterTempFEl.textContent = '= ' + f1(HEATER.tempC) + ' °F';
- }
-
- // Controls
- targetValEl.textContent = HEATER.targetC.toFixed(1).replace(/\.0$/, '');
- targetUp.disabled = HEATER.targetC >= T_MAX;
- targetDown.disabled = HEATER.targetC <= T_MIN;
- toggleLabel.textContent = HEATER.running ? 'Stop heating' : 'Start heating';
- toggleBtn.classList.toggle('on', HEATER.running);
+// Temperature-driven glow behind the element
+if (HEATER.tempC === null) {
+heaterGlow.style.opacity = 0;
+} else {
+const g = glowFor(HEATER.tempC, HEATER.state);
+heaterGlow.style.background =
+'radial-gradient(circle, rgba(' + g.rgb + ',0.85), rgba(' + g.rgb + ',0.32) 42%, transparent 70%)';
+heaterGlow.style.opacity = g.opacity;
 }
+
+
+// Big element readout
+if (HEATER.tempC === null) {
+heaterTempEl.className = 'hr-temp placeholder';
+heaterTempEl.innerHTML = '—<span class="hr-unit">°C</span>';
+heaterTempFEl.textContent = 'Weighted average · 5 sensors';
+} else {
+heaterTempEl.className = 'hr-temp';
+heaterTempEl.innerHTML = HEATER.tempC.toFixed(1) + '<span class="hr-unit">°C</span>';
+heaterTempFEl.textContent = '= ' + f1(HEATER.tempC) + ' °F';
+}
+
+
+// Controls
+targetValEl.textContent = HEATER.targetC.toFixed(1).replace(/\.0$/, '');
+targetUp.disabled = HEATER.targetC >= T_MAX;
+targetDown.disabled = HEATER.targetC <= T_MIN;
+toggleLabel.textContent = HEATER.running ? 'Stop heating' : 'Start heating';
+toggleBtn.classList.toggle('on', HEATER.running);
+}
+
 
 // ---- Controls ----
 function adjustTarget(delta) {
- HEATER.targetC = Math.min(T_MAX, Math.max(T_MIN, HEATER.targetC + delta));
- renderHeater();
+HEATER.targetC = Math.min(T_MAX, Math.max(T_MIN, HEATER.targetC + delta));
+renderHeater();
 }
 targetUp.addEventListener('click', () => adjustTarget(0.5));
 targetDown.addEventListener('click', () => adjustTarget(-0.5));
 
+
 toggleBtn.addEventListener('click', () => {
- if (HEATER.running) {
- HEATER.running = false;          // begin cool-down
- } else {
- if (HEATER.state === 'fault') HEATER.state = 'standby'; // clear fault on restart
- HEATER.running = true;
- if (HEATER.tempC === null) HEATER.tempC = AMBIENT;
- ensureTimer();
- }
- renderHeater();
+if (HEATER.running) {
+HEATER.running = false;          // begin cool-down
+} else {
+if (HEATER.state === 'fault') HEATER.state = 'standby'; // clear fault on restart
+HEATER.running = true;
+if (!isConnected) {
+// No live sensors → run the demo ramp so the visual still animates.
+if (HEATER.tempC === null) HEATER.tempC = AMBIENT;
+ensureTimer();
+} else {
+// Live sensors → reflect the current weighted average right away.
+window.updateHeaterFromSensors();
+}
+}
+renderHeater();
 });
+
 
 // ---- Demo simulation (placeholder for real heater telemetry) ----
 function ensureTimer() { if (!HEATER.timer) HEATER.timer = setInterval(tick, 600); }
 function clearTimer() { clearInterval(HEATER.timer); HEATER.timer = null; }
 
+
 function tick() {
- if (HEATER.tempC === null) { clearTimer(); return; }
+if (HEATER.tempC === null) { clearTimer(); return; }
 
- if (HEATER.running) {
- // Ease toward target with a small overshoot tendency.
- HEATER.tempC += (HEATER.targetC + 1.2 - HEATER.tempC) * 0.12 + 0.05;
- HEATER.guardCoilC = HEATER.tempC + 4 + Math.random() * 1.2;
- HEATER.guardSkinC = HEATER.tempC - 1.3 + Math.random() * 0.5;
 
- if (HEATER.tempC >= SAFETY_CUTOFF || HEATER.guardCoilC >= SAFETY_CUTOFF) {
- HEATER.running = false;
- HEATER.state = 'fault';
- } else {
- HEATER.state = (HEATER.tempC >= HEATER.targetC - TARGET_BAND) ? 'target' : 'heating';
- }
- } else {
- // Cool-down toward ambient.
- HEATER.tempC += (AMBIENT - HEATER.tempC) * 0.12;
- HEATER.guardCoilC = HEATER.tempC + 0.5;
- HEATER.guardSkinC = HEATER.tempC - 0.5;
- if (HEATER.state !== 'fault') HEATER.state = 'standby';
- if (Math.abs(HEATER.tempC - AMBIENT) < 0.25) {
- HEATER.tempC = null;
- HEATER.guardCoilC = null;
- HEATER.guardSkinC = null;
- clearTimer();
- }
- }
+if (HEATER.running) {
+// Ease toward target with a small overshoot tendency.
+HEATER.tempC += (HEATER.targetC + 1.2 - HEATER.tempC) * 0.12 + 0.05;
+HEATER.guardCoilC = HEATER.tempC + 4 + Math.random() * 1.2;
+HEATER.guardSkinC = HEATER.tempC - 1.3 + Math.random() * 0.5;
 
- HEATER.lastUpdate = new Date();
- renderHeater();
+
+if (HEATER.tempC >= SAFETY_CUTOFF || HEATER.guardCoilC >= SAFETY_CUTOFF) {
+HEATER.running = false;
+HEATER.state = 'fault';
+} else {
+HEATER.state = (HEATER.tempC >= HEATER.targetC - TARGET_BAND) ? 'target' : 'heating';
+}
+} else {
+// Cool-down toward ambient.
+HEATER.tempC += (AMBIENT - HEATER.tempC) * 0.12;
+HEATER.guardCoilC = HEATER.tempC + 0.5;
+HEATER.guardSkinC = HEATER.tempC - 0.5;
+if (HEATER.state !== 'fault') HEATER.state = 'standby';
+if (Math.abs(HEATER.tempC - AMBIENT) < 0.25) {
+HEATER.tempC = null;
+HEATER.guardCoilC = null;
+HEATER.guardSkinC = null;
+clearTimer();
+}
 }
 
+
+HEATER.lastUpdate = new Date();
+renderHeater();
+}
+
+
 /* ----------------------------------------------------------------
-   REAL DATA HOOK
-   When the heater reports over BLE, stop using the demo tick and
-   feed live values in instead, e.g. from a characteristicvaluechanged
-   handler:
+  REAL DATA HOOK
+  When the heater reports over BLE, stop using the demo tick and
+  feed live values in instead, e.g. from a characteristicvaluechanged
+  handler:
 
-     window.heaterIngest({ element: 34.2, coil: 38.1, skin: 32.9,
-                           state: 'heating' });
 
-   The glow will follow `element` automatically (orange -> red).
-   ---------------------------------------------------------------- */
+    window.heaterIngest({ element: 34.2, coil: 38.1, skin: 32.9,
+                          state: 'heating' });
+
+
+  The glow will follow `element` automatically (orange -> red).
+  ---------------------------------------------------------------- */
 window.heaterIngest = function (d) {
- if (HEATER.timer) clearTimer(); // demo off once real data arrives
- if (typeof d.element === 'number') HEATER.tempC = d.element;
- if (typeof d.coil === 'number') HEATER.guardCoilC = d.coil;
- if (typeof d.skin === 'number') HEATER.guardSkinC = d.skin;
- if (d.state && STATE_TEXT[d.state]) HEATER.state = d.state;
- HEATER.running = (HEATER.state === 'heating' || HEATER.state === 'target');
- HEATER.lastUpdate = new Date();
- renderHeater();
+if (HEATER.timer) clearTimer(); // demo off once real data arrives
+if (typeof d.element === 'number') HEATER.tempC = d.element;
+if (typeof d.coil === 'number') HEATER.guardCoilC = d.coil;
+if (typeof d.skin === 'number') HEATER.guardSkinC = d.skin;
+if (d.state && STATE_TEXT[d.state]) HEATER.state = d.state;
+HEATER.running = (HEATER.state === 'heating' || HEATER.state === 'target');
+HEATER.lastUpdate = new Date();
+renderHeater();
 };
+
 
 renderHeater();
 </script>
