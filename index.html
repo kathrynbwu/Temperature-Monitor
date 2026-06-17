@@ -90,10 +90,10 @@
  100% { transform: scale(2.4); opacity: 0; }
  }
 
- main {
- width: 100%;
- max-width: 860px;
- }
+ /* Let the page children (.page-body, .chart-card) participate in the body's
+    centered full-width layout directly, exactly like the original single-page
+    version. The [hidden] rule below still hides the inactive page. */
+ main { display: contents; }
 
  .page-body {
  width: 100%;
