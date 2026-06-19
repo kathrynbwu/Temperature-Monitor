@@ -411,6 +411,17 @@
  transition: width 0.4s ease;
  }
 
+ /* auto-off soak timer (appears below the duty bar) */
+ .soak-row {
+ display: none;
+ justify-content: space-between;
+ align-items: baseline;
+ }
+ .soak-row.show { display: flex; }
+ .soak-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+ .soak-value { font-size: 14px; color: var(--subtle); font-variant-numeric: tabular-nums; }
+ .soak-value.armed { color: #ff8a8a; }
+
  /* on/off toggle button */
  #heat-toggle {
  margin-top: auto;
@@ -707,6 +718,10 @@
  <span class="hr-value" id="heat-power">0.0 W</span>
  </div>
  <div class="duty-track"><div class="duty-fill" id="heat-duty"></div></div>
+ <div class="soak-row" id="soak-row">
+ <span class="soak-label">Auto-off</span>
+ <span class="soak-value" id="soak-value">—</span>
+ </div>
  </div>
 
  <!-- on/off -->
@@ -959,6 +974,16 @@ const heatPowerEl  = document.getElementById('heat-power');
 const heatDutyEl   = document.getElementById('heat-duty');
 const heatToggle   = document.getElementById('heat-toggle');
 
+// --- Auto-off soak timer ---
+// Once skin temp reaches the target, hold for this long, then shut the heater
+// off automatically. 180 s = 3 min (set anywhere 120–300 for a 2–5 min hold).
+const HEAT_SOAK_SECONDS = 180;
+const SOAK_TOL = 0.1;           // °C tolerance for "reached target"
+let soakEndTime = null;         // ms timestamp of scheduled auto-off
+let soakTicker  = null;
+const soakRow   = document.getElementById('soak-row');
+const soakValue = document.getElementById('soak-value');
+
 // dial elements + geometry
 const dialWrap  = document.getElementById('dial-wrap');
 const dialSvg   = document.getElementById('dial-svg');
@@ -1028,6 +1053,7 @@ function setTargetFromPointer(clientX, clientY) {
  t = Math.min(HEAT_MAX, Math.max(HEAT_MIN, t));
  if (t !== heatTarget) {
  heatTarget = t;
+ clearSoak();           // re-arm the auto-off at the new target
  sendHeaterCommand();
  }
  renderDial();
@@ -1080,8 +1106,57 @@ function renderHeatState() {
  if (!heaterOn) {
  heatPowerEl.textContent = '0.0 W';
  heatDutyEl.style.width = '0%';
+ clearSoak();           // turning off cancels the auto-off countdown
  }
  renderDial();
+ renderSoak();
+}
+
+/* ---- Auto-off soak timer ---- */
+function fmtMMSS(sec) {
+ sec = Math.max(0, Math.round(sec));
+ const m = Math.floor(sec / 60);
+ const s = sec % 60;
+ return m + ':' + String(s).padStart(2, '0');
+}
+
+function startSoak() {
+ if (soakEndTime !== null) return;                 // already armed
+ soakEndTime = Date.now() + HEAT_SOAK_SECONDS * 1000;
+ if (!soakTicker) soakTicker = setInterval(tickSoak, 250);
+ renderSoak();
+}
+
+function clearSoak() {
+ soakEndTime = null;
+ if (soakTicker) { clearInterval(soakTicker); soakTicker = null; }
+ renderSoak();
+}
+
+function tickSoak() {
+ if (soakEndTime === null) return;
+ if ((soakEndTime - Date.now()) / 1000 <= 0) {
+ clearSoak();
+ if (heaterOn) {                                  // auto shut-off
+ heaterOn = false;
+ renderHeatState();
+ sendHeaterCommand();
+ }
+ return;
+ }
+ renderSoak();
+}
+
+function renderSoak() {
+ if (!heaterOn) { soakRow.classList.remove('show'); return; }
+ soakRow.classList.add('show');
+ if (soakEndTime !== null) {
+ soakValue.textContent = 'in ' + fmtMMSS((soakEndTime - Date.now()) / 1000);
+ soakValue.classList.add('armed');
+ } else {
+ soakValue.textContent = 'arms at target';
+ soakValue.classList.remove('armed');
+ }
 }
 
 // updates skin temp + power on each BLE packet
@@ -1110,6 +1185,12 @@ function updateHeating(parsed) {
  const watts = (duty / 100) * P_MAX;
  heatPowerEl.textContent = watts.toFixed(1) + ' W';
  heatDutyEl.style.width = duty + '%';
+
+ // Once skin reaches the target while heating, start the auto-off countdown.
+ if (heaterOn && skin !== null && skin >= heatTarget - SOAK_TOL) {
+ startSoak();
+ }
+ renderSoak();
 }
 
 // Writes {heat, target} to the firmware's command characteristic.
